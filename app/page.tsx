@@ -14,7 +14,7 @@ const categories = [
 const products = [
   { id: 1, name: "Ponni Rice", category: "Rice", unit: "5 kg", price: 320, shop: "Demo Supermarket", tag: "Popular" },
   { id: 2, name: "Sunflower Oil", category: "Cooking Oil", unit: "1 litre", price: 145, shop: "Demo Supermarket", tag: "Value deal" },
-  { id: 3, name: "Toor Dal", category: "Home Groceries", unit: "1 kg", price: 165, shop: "Sri Stores", tag: "Daily essential" },
+  { id: 3, name: "Toor Dal", category: "Home Groceries", unit: "1 kg", price: 60, shop: "Sri Stores", tag: "Daily essential" },
   { id: 4, name: "Tomato", category: "Vegetables", unit: "1 kg", price: 35, shop: "Fresh Market", tag: "Fresh pick" },
   { id: 5, name: "Bath Soap", category: "Home Needs", unit: "1 pack", price:  લીધ 60, shop: "Sri Stores", tag: "Household" },
   { id: 6, name: "Idli Rice", category: "Rice", unit: "1 kg", price: 58, shop: "Fresh Market", tag: "Everyday value" },
