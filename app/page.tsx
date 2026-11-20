@@ -49,6 +49,7 @@ export default function Home() {
   const [pricesLoading, setPricesLoading] = useState(true);
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
+  const [shoppingList, setShoppingList] = useState<Record<string, { name: string; unit: string; quantity: number }>>({});
 
   useEffect(() => {
     async function loadApprovedShops() {
@@ -110,6 +111,33 @@ export default function Home() {
     ).sort((a, b) => a[0].product_name.localeCompare(b[0].product_name));
   }, [livePrices, compareSearch, compareArea]);
 
+  const shoppingItems = Object.entries(shoppingList);
+  const basketComparisons = useMemo(() => {
+    const shops = new Map<string, { shopName: string; area: string; total: number; available: number }>();
+    const basket = Object.entries(shoppingList);
+    livePrices.forEach((price) => {
+      const shop = shops.get(price.shop_id) ?? { shopName: price.shop_name, area: price.area, total: 0, available: 0 };
+      const key = price.product_name.trim().toLowerCase() + "__" + price.unit.trim().toLowerCase();
+      const requested = shoppingList[key];
+      if (requested) { shop.total += Number(price.price) * requested.quantity; shop.available += 1; }
+      shops.set(price.shop_id, shop);
+    });
+    return Array.from(shops.entries()).map(([id, shop]) => ({ id, ...shop, complete: shop.available === basket.length }))
+      .sort((a, b) => a.complete !== b.complete ? (a.complete ? -1 : 1) : a.total - b.total);
+  }, [livePrices, shoppingList]);
+
+  function addToShoppingList(item: PublicPrice) {
+    const key = item.product_name.trim().toLowerCase() + "__" + item.unit.trim().toLowerCase();
+    setShoppingList((current) => ({ ...current, [key]: { name: item.product_name, unit: item.unit, quantity: current[key]?.quantity ?? 1 } }));
+  }
+
+  function updateShoppingQuantity(key: string, quantity: number) {
+    setShoppingList((current) => ({ ...current, [key]: { ...current[key], quantity: Math.max(1, Math.min(99, quantity)) } }));
+  }
+
+  function removeShoppingItem(key: string) {
+    setShoppingList((current) => { const next = { ...current }; delete next[key]; return next; });
+  }
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
@@ -217,6 +245,9 @@ export default function Home() {
                     <div><span className="product-category">{items[0].category}</span><h3>{items[0].product_name}</h3><p>{items[0].unit}</p></div>
                     {items.length > 1 && <span className="comparison-savings">Save up to ₹{(highest - lowest).toFixed(2)}</span>}
                   </div>
+                  <button className="add-shopping-item" onClick={() => addToShoppingList(items[0])}>
+                    {shoppingList[items[0].product_name.trim().toLowerCase() + "__" + items[0].unit.trim().toLowerCase()] ? "✓ Added to shopping list" : "+ Add to shopping list"}
+                  </button>
                   <div className="comparison-shop-list">
                     {items.map((item, index) => (
                       <div className={index === 0 ? "comparison-shop best-price" : "comparison-shop"} key={item.id}>
@@ -230,6 +261,40 @@ export default function Home() {
               );
             })}
           </div>
+        )}
+      </section>
+
+      <section className="content-section shopping-list-section" id="shopping-list">
+        <div className="section-heading">
+          <div><span className="eyebrow">PLAN YOUR PURCHASE</span><h2>My shopping list</h2></div>
+          <span className="location-pill">{shoppingItems.length} {shoppingItems.length === 1 ? "item" : "items"}</span>
+        </div>
+        {shoppingItems.length === 0 ? (
+          <p className="shops-status">Your list is empty. Add products using the “Add to shopping list” button in the price comparison section.</p>
+        ) : (
+          <>
+            <div className="shopping-list-items">
+              {shoppingItems.map(([key, item]) => (
+                <div className="shopping-list-item" key={key}>
+                  <div><strong>{item.name}</strong><span>{item.unit}</span></div>
+                  <label>Qty<input type="number" min="1" max="99" value={item.quantity} onChange={(event) => updateShoppingQuantity(key, Number(event.target.value) || 1)} /></label>
+                  <button onClick={() => removeShoppingItem(key)} aria-label={"Remove " + item.name}>Remove</button>
+                </div>
+              ))}
+            </div>
+            <div className="basket-results">
+              <h3>Shop-wise basket total</h3>
+              <p className="basket-help">Totals are shown only when that shop has a price for every item in your list.</p>
+              {basketComparisons.length === 0 ? <p className="shops-status">No shop prices are available for this list yet.</p> : basketComparisons.map((shop) => (
+                <div className={shop.complete ? "basket-shop complete" : "basket-shop"} key={shop.id}>
+                  <div><strong>{shop.shopName}</strong><span>{shop.area} · {shop.available}/{shoppingItems.length} items priced</span></div>
+                  {shop.complete ? <strong className="basket-total">₹{shop.total.toFixed(2)}</strong> : <span className="basket-missing">Incomplete basket</span>}
+                </div>
+              ))}
+              {basketComparisons.some((shop) => shop.complete) && <p className="basket-footnote">Lowest complete-basket total is listed first. Prices may change when shops update them.</p>}
+            </div>
+            <button className="clear-shopping-list" onClick={() => setShoppingList({})}>Clear shopping list</button>
+          </>
         )}
       </section>
 
