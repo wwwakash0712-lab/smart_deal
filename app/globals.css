@@ -129,3 +129,16 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 .admin-reject{background:#fff0ef;color:#a52b2b}
 .admin-empty{color:var(--muted);font-size:13px}
 @media(max-width:600px){.admin-page{padding:20px 14px}.admin-card{padding:25px 20px}.admin-content{margin:38px auto}.admin-shop-details{grid-template-columns:1fr}.admin-shop-card{padding:17px}.admin-shop-top h3{font-size:17px}}
+
+
+/* Approved public shop directory */
+.approved-shops-section{max-width:1100px;margin:76px auto 0;padding:0 24px}
+.approved-shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.approved-shop-card{display:flex;gap:15px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:13px;padding:19px}
+.approved-shop-icon{width:48px;height:48px;flex:0 0 48px;border-radius:12px;background:var(--mint);display:grid;place-items:center;font-size:25px}
+.approved-label{font-size:9px;letter-spacing:1px;font-weight:800;color:var(--green)}
+.approved-shop-copy h3{font:800 17px Manrope,sans-serif;margin:6px 0}
+.approved-shop-area,.approved-shop-products{font-size:12px;color:var(--muted);line-height:1.6;margin:4px 0}
+.approved-shop-products strong{color:var(--ink)}
+.shops-status{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--muted);font-size:13px}
+@media(max-width:760px){.approved-shops-section{margin:55px auto 0;padding:0 18px}.approved-shop-grid{grid-template-columns:1fr}}
