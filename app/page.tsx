@@ -112,7 +112,7 @@ export default function Home() {
 
       <section className="shop-cta" id="shops">
         <div><span className="eyebrow">FOR LOCAL BUSINESSES</span><h2>Own a shop in Trichy?</h2><p>Help nearby customers discover your store and compare your latest prices.</p></div>
-        <a className="light-button" href="mailto:hello@smartdeal.example?subject=Smart%20Deal%20Shop%20Registration">Register your shop <span>→</span></a>
+        <a className="light-button" href="/shop-register">Register your shop <span>→</span></a>
       </section>
 
       <footer><a className="brand footer-brand" href="#"><span className="brand-mark">S</span> Smart Deal</a><span>Made for smarter shopping in Trichy.</span><span>© 2026 Smart Deal</span></footer>
