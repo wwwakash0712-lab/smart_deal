@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
 
 const categories = [
   "All",
@@ -20,7 +21,38 @@ const products = [
   { id: 6, name: "Idli Rice", category: "Rice", unit: "1 kg", price: 58, shop: "Fresh Market", tag: "Everyday value" },
 ];
 
+type ApprovedShop = {
+  id: string;
+  shop_name: string;
+  area: string;
+  products: string | null;
+  created_at: string;
+};
+
 export default function Home() {
+  const [approvedShops, setApprovedShops] = useState<ApprovedShop[]>([]);
+  const [shopsLoading, setShopsLoading] = useState(true);
+  const [shopsError, setShopsError] = useState("");
+
+  useEffect(() => {
+    async function loadApprovedShops() {
+      const { data, error } = await supabase
+        .from("shops")
+        .select("id, shop_name, area, products, created_at")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        setShopsError("Approved shops are temporarily unavailable.");
+      } else {
+        setApprovedShops((data ?? []) as ApprovedShop[]);
+      }
+      setShopsLoading(false);
+    }
+
+    loadApprovedShops();
+  }, []);
+
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
 
@@ -60,6 +92,34 @@ export default function Home() {
           <div className="hero-sticker">GOOD<br />DEALS<br />NEAR YOU</div>
           <div className="floating-leaf">✳</div>
         </div>
+      </section>
+
+      <section className="approved-shops-section" id="approved-shops">
+        <div className="section-heading">
+          <div><span className="eyebrow">VERIFIED LOCAL STORES</span><h2>Approved shops in Trichy</h2></div>
+          <span className="location-pill">Shop listings</span>
+        </div>
+        {shopsLoading ? (
+          <p className="shops-status">Loading approved shops...</p>
+        ) : shopsError ? (
+          <p className="shops-status">{shopsError}</p>
+        ) : approvedShops.length === 0 ? (
+          <p className="shops-status">No approved shops yet. Local shop listings will appear here after approval.</p>
+        ) : (
+          <div className="approved-shop-grid">
+            {approvedShops.map((shop) => (
+              <article className="approved-shop-card" key={shop.id}>
+                <div className="approved-shop-icon">🏪</div>
+                <div className="approved-shop-copy">
+                  <span className="approved-label">APPROVED SHOP</span>
+                  <h3>{shop.shop_name}</h3>
+                  <p className="approved-shop-area">{shop.area}, Tiruchirappalli</p>
+                  <p className="approved-shop-products"><strong>Products:</strong> {shop.products || "Details not provided"}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="content-section" id="deals">
