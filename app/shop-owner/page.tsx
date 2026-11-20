@@ -23,6 +23,8 @@ export default function ShopOwnerDashboard() {
   const [price, setPrice] = useState("");
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
+  const [manualLatitude, setManualLatitude] = useState("");
+  const [manualLongitude, setManualLongitude] = useState("");
 
   const loadData = useCallback(async () => {
     setError("");
@@ -88,6 +90,26 @@ export default function ShopOwnerDashboard() {
     );
   }
 
+  async function saveManualShopLocation() {
+    if (!shop) return;
+    const latitude = Number(manualLatitude);
+    const longitude = Number(manualLongitude);
+    if (!manualLatitude.trim() || !manualLongitude.trim() || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+      setLocationNotice("Enter valid coordinates. Latitude must be between -90 and 90; longitude between -180 and 180.");
+      return;
+    }
+    setLocationBusy(true);
+    setLocationNotice("");
+    const { error: locationError } = await supabase
+      .from("shops")
+      .update({ latitude, longitude })
+      .eq("id", shop.id);
+    setLocationBusy(false);
+    setLocationNotice(locationError
+      ? "Could not save coordinates. Please check the GPS SQL setup and try again."
+      : "Manual shop location saved successfully.");
+  }
+
   function startEdit(product: Product) {
     setEditingId(product.id);
     setName(product.product_name);
@@ -151,6 +173,17 @@ export default function ShopOwnerDashboard() {
             <button className="primary-button" type="button" onClick={saveShopLocation} disabled={locationBusy}>
               {locationBusy ? "Getting location..." : "Save my shop GPS location"}
             </button>
+            <div className="owner-manual-location">
+              <h3>Or enter shop coordinates manually</h3>
+              <p>Paste the latitude and longitude from your shop's Google Maps location.</p>
+              <div className="owner-price-form">
+                <label>Latitude<input type="number" step="any" value={manualLatitude} onChange={event => setManualLatitude(event.target.value)} placeholder="e.g. 10.7905" /></label>
+                <label>Longitude<input type="number" step="any" value={manualLongitude} onChange={event => setManualLongitude(event.target.value)} placeholder="e.g. 78.7047" /></label>
+              </div>
+              <button className="primary-button" type="button" onClick={saveManualShopLocation} disabled={locationBusy}>
+                {locationBusy ? "Saving location..." : "Save manual location"}
+              </button>
+            </div>
             {locationNotice && <p className="shop-location-status" role="status">{locationNotice}</p>}
           </div>
           <div className="owner-panel">
