@@ -47,6 +47,8 @@ export default function Home() {
   const [shopsError, setShopsError] = useState("");
   const [livePrices, setLivePrices] = useState<PublicPrice[]>([]);
   const [pricesLoading, setPricesLoading] = useState(true);
+  const [compareSearch, setCompareSearch] = useState("");
+  const [compareArea, setCompareArea] = useState("All areas");
 
   useEffect(() => {
     async function loadApprovedShops() {
@@ -76,6 +78,37 @@ export default function Home() {
     }
     loadPublicPrices();
   }, []);
+
+  const comparisonAreas = useMemo(
+    () => ["All areas", ...Array.from(new Set(livePrices.map((item) => item.area))).sort()],
+    [livePrices]
+  );
+
+  const comparisonGroups = useMemo(() => {
+    const term = compareSearch.trim().toLowerCase();
+    const matchingPrices = livePrices.filter((item) => {
+      const matchesArea = compareArea === "All areas" || item.area === compareArea;
+      const matchesSearch =
+        !term ||
+        item.product_name.toLowerCase().includes(term) ||
+        item.category.toLowerCase().includes(term) ||
+        item.shop_name.toLowerCase().includes(term) ||
+        item.area.toLowerCase().includes(term);
+      return matchesArea && matchesSearch;
+    });
+
+    const groups = new Map<string, PublicPrice[]>();
+    matchingPrices.forEach((item) => {
+      const key = `${item.product_name.trim().toLowerCase()}__${item.unit.trim().toLowerCase()}`;
+      const group = groups.get(key) ?? [];
+      group.push(item);
+      groups.set(key, group);
+    });
+
+    return Array.from(groups.values()).map((items) =>
+      items.sort((a, b) => Number(a.price) - Number(b.price))
+    ).sort((a, b) => a[0].product_name.localeCompare(b[0].product_name));
+  }, [livePrices, compareSearch, compareArea]);
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
@@ -148,19 +181,54 @@ export default function Home() {
 
       <section className="content-section live-prices-section" id="live-prices">
         <div className="section-heading">
-          <div><span className="eyebrow">UPDATED BY LOCAL SHOPS</span><h2>Live shop prices</h2></div>
-          <span className="location-pill">Verified shop listings</span>
+          <div><span className="eyebrow">COMPARE BEFORE YOU BUY</span><h2>Compare shop prices</h2></div>
+          <span className="location-pill">Live prices from local shops</span>
+        </div>
+        <div className="comparison-controls">
+          <label className="search-box comparison-search">
+            <span>⌕</span>
+            <input
+              value={compareSearch}
+              onChange={(event) => setCompareSearch(event.target.value)}
+              placeholder="Search product, shop or area..."
+              aria-label="Search live prices"
+            />
+            {compareSearch && <button onClick={() => setCompareSearch("")} aria-label="Clear comparison search">×</button>}
+          </label>
+          <label className="comparison-area-label">
+            <span>Choose area</span>
+            <select value={compareArea} onChange={(event) => setCompareArea(event.target.value)}>
+              {comparisonAreas.map((area) => <option key={area} value={area}>{area}</option>)}
+            </select>
+          </label>
         </div>
         {pricesLoading ? <p className="shops-status">Loading shop prices...</p> : livePrices.length === 0 ? (
           <p className="shops-status">No shop prices have been published yet. Approved shop owners can add prices from their owner portal.</p>
+        ) : comparisonGroups.length === 0 ? (
+          <p className="shops-status">No matching prices found. Try another product or area.</p>
         ) : (
-          <div className="live-price-list">
-            {livePrices.map((item) => (
-              <article className="live-price-row" key={item.id}>
-                <div><span className="product-category">{item.category}</span><h3>{item.product_name}</h3><p>{item.unit} · {item.shop_name}, {item.area}</p></div>
-                <div className="live-price-value"><strong>₹{Number(item.price).toFixed(2)}</strong><span>Updated {new Date(item.updated_at).toLocaleDateString("en-IN")}</span></div>
-              </article>
-            ))}
+          <div className="comparison-grid">
+            {comparisonGroups.map((items) => {
+              const lowest = Number(items[0].price);
+              const highest = Number(items[items.length - 1].price);
+              return (
+                <article className="comparison-card" key={items[0].id}>
+                  <div className="comparison-card-heading">
+                    <div><span className="product-category">{items[0].category}</span><h3>{items[0].product_name}</h3><p>{items[0].unit}</p></div>
+                    {items.length > 1 && <span className="comparison-savings">Save up to ₹{(highest - lowest).toFixed(2)}</span>}
+                  </div>
+                  <div className="comparison-shop-list">
+                    {items.map((item, index) => (
+                      <div className={index === 0 ? "comparison-shop best-price" : "comparison-shop"} key={item.id}>
+                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span></div>
+                        <strong className="comparison-price">₹{Number(item.price).toFixed(2)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="comparison-updated">Prices last updated by shops · {new Date(items[0].updated_at).toLocaleDateString("en-IN")}</p>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
