@@ -142,3 +142,33 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 .approved-shop-products strong{color:var(--ink)}
 .shops-status{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;color:var(--muted);font-size:13px}
 @media(max-width:760px){.approved-shops-section{margin:55px auto 0;padding:0 18px}.approved-shop-grid{grid-template-columns:1fr}}
+
+
+/* Shop owner portal */
+.owner-content{max-width:900px;margin:48px auto}
+.owner-content h1{font:800 34px Manrope,sans-serif;letter-spacing:-1px;margin:9px 0}
+.owner-panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px;margin-top:28px}
+.owner-panel h2,.owner-list-heading h2{font:700 19px Manrope,sans-serif;margin:0 0 18px}
+.owner-price-form{display:grid;grid-template-columns:1fr 1fr;gap:15px}
+.owner-price-form label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#435149}
+.owner-price-form input,.owner-price-form select{width:100%;border:1px solid #dfe6df;border-radius:8px;padding:12px;font:400 13px 'DM Sans',sans-serif;background:#fff;color:var(--ink)}
+.owner-form-actions{display:flex;gap:10px;align-items:center}
+.owner-form-actions button{border:0;cursor:pointer}
+.owner-list-heading{display:flex;align-items:center;justify-content:space-between;margin:32px 0 15px}
+.owner-list-heading h2{margin:0}
+.owner-list-heading span{font-size:11px;color:var(--muted)}
+.owner-product-list{display:grid;gap:10px}
+.owner-product-row,.live-price-row{display:flex;justify-content:space-between;align-items:center;gap:15px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:16px 18px}
+.owner-product-row strong,.live-price-row h3{font:700 15px Manrope,sans-serif}
+.owner-product-row p,.live-price-row p{font-size:11px;color:var(--muted);margin:5px 0 0}
+.owner-product-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.owner-product-actions>strong{font:800 16px Manrope,sans-serif}
+.owner-product-actions button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}
+.owner-product-actions .delete-price{color:#a52b2b}
+.live-price-list{display:grid;gap:10px}
+.live-price-row h3{margin:5px 0}
+.live-price-value{display:grid;text-align:right;gap:4px;white-space:nowrap}
+.live-price-value strong{font:800 19px Manrope,sans-serif;color:var(--green)}
+.live-price-value span{font-size:10px;color:var(--muted)}
+.shop-cta-actions{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:760px){.owner-content{margin:35px auto}.owner-price-form{grid-template-columns:1fr}.owner-product-row,.live-price-row{align-items:flex-start}.owner-product-actions{justify-content:flex-end}.live-price-value strong{font-size:16px}}
