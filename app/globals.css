@@ -216,3 +216,11 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 .basket-missing{color:#946b2e!important;font-weight:700}
 .clear-shopping-list{margin-top:14px;color:var(--muted)}
 @media(max-width:520px){.shopping-list-item{gap:8px;padding:11px 9px}.shopping-list-item input{width:54px}.shopping-list-item button{padding:7px}.basket-shop{padding:12px}.basket-total{font-size:15px}}
+
+
+/* Area-based nearby shop finder */
+.shop-area-filter{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:-7px 0 22px;padding:15px 17px;background:#f8faf7;border:1px solid var(--line);border-radius:11px}
+.shop-area-filter label{font-size:12px;font-weight:800;color:#435149}
+.shop-area-filter select{min-width:190px;height:42px;padding:0 12px;border:1px solid #dfe6df;border-radius:8px;background:#fff;color:var(--ink);font:600 13px "DM Sans",sans-serif}
+.shop-area-filter>span{font-size:11px;color:var(--muted)}
+@media(max-width:520px){.shop-area-filter{align-items:stretch;flex-direction:column}.shop-area-filter select{width:100%}}
