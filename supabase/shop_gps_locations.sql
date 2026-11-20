@@ -40,6 +40,9 @@ with check (
   )
 );
 
+-- The security-invoker public view needs column-level read permission.
+grant select (latitude, longitude) on public.shops to anon, authenticated;
+
 -- Public view exposes coordinates only for approved shops.
 create or replace view public.approved_shops
 with (security_invoker = true)
