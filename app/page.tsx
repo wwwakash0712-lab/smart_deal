@@ -273,7 +273,7 @@ export default function Home() {
           <button className="primary-button nearby-location-button" type="button" onClick={findNearbyShops} disabled={locationLoading}>
             {locationLoading ? "Finding location..." : customerPosition ? "Refresh my location" : "Use my current location"}
           </button>
-          <label htmlFor="shop-area-select">Your area in Trichy</label>
+          <label htmlFor="shop-area-select">Or choose your area manually</label>
           <select id="shop-area-select" value={selectedShopArea} onChange={(event) => setSelectedShopArea(event.target.value)}>
             {shopAreas.map((area) => <option key={area} value={area}>{area}</option>)}
           </select>
