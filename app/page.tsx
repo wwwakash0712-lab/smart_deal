@@ -29,10 +29,24 @@ type ApprovedShop = {
   created_at: string;
 };
 
+type PublicPrice = {
+  id: string;
+  shop_id: string;
+  product_name: string;
+  category: string;
+  unit: string;
+  price: number;
+  updated_at: string;
+  shop_name: string;
+  area: string;
+};
+
 export default function Home() {
   const [approvedShops, setApprovedShops] = useState<ApprovedShop[]>([]);
   const [shopsLoading, setShopsLoading] = useState(true);
   const [shopsError, setShopsError] = useState("");
+  const [livePrices, setLivePrices] = useState<PublicPrice[]>([]);
+  const [pricesLoading, setPricesLoading] = useState(true);
 
   useEffect(() => {
     async function loadApprovedShops() {
@@ -51,6 +65,16 @@ export default function Home() {
     }
 
     loadApprovedShops();
+
+    async function loadPublicPrices() {
+      const { data, error } = await supabase
+        .from("public_shop_prices")
+        .select("id, shop_id, product_name, category, unit, price, updated_at, shop_name, area")
+        .order("updated_at", { ascending: false });
+      if (!error) setLivePrices((data ?? []) as PublicPrice[]);
+      setPricesLoading(false);
+    }
+    loadPublicPrices();
   }, []);
 
   const [search, setSearch] = useState("");
@@ -122,6 +146,25 @@ export default function Home() {
         )}
       </section>
 
+      <section className="content-section live-prices-section" id="live-prices">
+        <div className="section-heading">
+          <div><span className="eyebrow">UPDATED BY LOCAL SHOPS</span><h2>Live shop prices</h2></div>
+          <span className="location-pill">Verified shop listings</span>
+        </div>
+        {pricesLoading ? <p className="shops-status">Loading shop prices...</p> : livePrices.length === 0 ? (
+          <p className="shops-status">No shop prices have been published yet. Approved shop owners can add prices from their owner portal.</p>
+        ) : (
+          <div className="live-price-list">
+            {livePrices.map((item) => (
+              <article className="live-price-row" key={item.id}>
+                <div><span className="product-category">{item.category}</span><h3>{item.product_name}</h3><p>{item.unit} · {item.shop_name}, {item.area}</p></div>
+                <div className="live-price-value"><strong>₹{Number(item.price).toFixed(2)}</strong><span>Updated {new Date(item.updated_at).toLocaleDateString("en-IN")}</span></div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
       <section className="content-section" id="deals">
         <div className="section-heading">
           <div><span className="eyebrow">FIND WHAT YOU NEED</span><h2>Explore local deals</h2></div>
@@ -172,7 +215,7 @@ export default function Home() {
 
       <section className="shop-cta" id="shops">
         <div><span className="eyebrow">FOR LOCAL BUSINESSES</span><h2>Own a shop in Trichy?</h2><p>Help nearby customers discover your store and compare your latest prices.</p></div>
-        <a className="light-button" href="/shop-register">Register your shop <span>→</span></a>
+        <div className="shop-cta-actions"><a className="light-button" href="/shop-register">Register your shop <span>→</span></a><a className="light-button" href="/shop-owner/login">Shop owner login</a></div>
       </section>
 
       <footer><a className="brand footer-brand" href="#"><span className="brand-mark">S</span> Smart Deal</a><span>Made for smarter shopping in Trichy.</span><span>© 2026 Smart Deal</span></footer>
