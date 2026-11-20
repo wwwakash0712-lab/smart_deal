@@ -21,6 +21,8 @@ export default function ShopOwnerDashboard() {
   const [category, setCategory] = useState("Groceries");
   const [unit, setUnit] = useState("1 kg");
   const [price, setPrice] = useState("");
+  const [locationBusy, setLocationBusy] = useState(false);
+  const [locationNotice, setLocationNotice] = useState("");
 
   const loadData = useCallback(async () => {
     setError("");
@@ -53,6 +55,38 @@ export default function ShopOwnerDashboard() {
   }, [router]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  function saveShopLocation() {
+    if (!shop) return;
+    if (!("geolocation" in navigator)) {
+      setLocationNotice("This browser does not support GPS location.");
+      return;
+    }
+    setLocationBusy(true);
+    setLocationNotice("Waiting for location permission...");
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { error: locationError } = await supabase
+          .from("shops")
+          .update({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          })
+          .eq("id", shop.id);
+        setLocationBusy(false);
+        setLocationNotice(locationError
+          ? "Could not save location. Please run the GPS SQL setup and try again."
+          : "Shop GPS location saved successfully.");
+      },
+      (error) => {
+        setLocationBusy(false);
+        setLocationNotice(error.code === 1
+          ? "Location permission denied. Allow location access in your browser and try again."
+          : "Could not get your location. Check device location settings and try again.");
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
+  }
 
   function startEdit(product: Product) {
     setEditingId(product.id);
@@ -111,6 +145,14 @@ export default function ShopOwnerDashboard() {
         {error && <p className="admin-error" role="alert">{error}</p>}
         {notice && <p className="admin-success" role="status">{notice}</p>}
         {shop && <>
+          <div className="owner-panel owner-location-panel">
+            <h2>Shop location</h2>
+            <p>Stand inside or near your shop, then allow GPS permission to save its location for nearby customers.</p>
+            <button className="primary-button" type="button" onClick={saveShopLocation} disabled={locationBusy}>
+              {locationBusy ? "Getting location..." : "Save my shop GPS location"}
+            </button>
+            {locationNotice && <p className="shop-location-status" role="status">{locationNotice}</p>}
+          </div>
           <div className="owner-panel">
             <h2>{editingId ? "Update product price" : "Add a product price"}</h2>
             <form className="owner-price-form" onSubmit={savePrice}>
