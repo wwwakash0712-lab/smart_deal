@@ -27,6 +27,8 @@ type ApprovedShop = {
   area: string;
   products: string | null;
   created_at: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type PublicPrice = {
@@ -50,6 +52,9 @@ export default function Home() {
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
   const [selectedShopArea, setSelectedShopArea] = useState("All areas");
+  const [customerPosition, setCustomerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationStatus, setLocationStatus] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
   const [shoppingList, setShoppingList] = useState<Record<string, { name: string; unit: string; quantity: number }>>({});
   const [shoppingListReady, setShoppingListReady] = useState(false);
 
@@ -80,7 +85,7 @@ export default function Home() {
     async function loadApprovedShops() {
       const { data, error } = await supabase
         .from("approved_shops")
-        .select("id, shop_name, area, products, created_at")
+        .select("id, shop_name, area, products, created_at, latitude, longitude")
         
         .order("created_at", { ascending: false });
 
@@ -110,10 +115,55 @@ export default function Home() {
     [approvedShops]
   );
 
-  const filteredApprovedShops = useMemo(
-    () => approvedShops.filter((shop) => selectedShopArea === "All areas" || shop.area.trim() === selectedShopArea),
-    [approvedShops, selectedShopArea]
-  );
+  const filteredApprovedShops = useMemo(() => {
+    const filtered = approvedShops.filter((shop) => selectedShopArea === "All areas" || shop.area.trim() === selectedShopArea);
+    if (!customerPosition) return filtered;
+    const distance = (shop: ApprovedShop) => {
+      if (shop.latitude == null || shop.longitude == null) return Number.POSITIVE_INFINITY;
+      const toRad = (value: number) => (value * Math.PI) / 180;
+      const dLat = toRad(Number(shop.latitude) - customerPosition.latitude);
+      const dLon = toRad(Number(shop.longitude) - customerPosition.longitude);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(customerPosition.latitude)) * Math.cos(toRad(Number(shop.latitude))) * Math.sin(dLon / 2) ** 2;
+      return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    return [...filtered].sort((a, b) => distance(a) - distance(b));
+  }, [approvedShops, selectedShopArea, customerPosition]);
+
+  function findNearbyShops() {
+    if (!("geolocation" in navigator)) {
+      setLocationStatus("This browser does not support location. Please choose your area manually.");
+      return;
+    }
+    setLocationLoading(true);
+    setLocationStatus("Requesting your location permission...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setCustomerPosition({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+        setLocationStatus("Your location is active. Shops with saved GPS coordinates are sorted by distance.");
+        setLocationLoading(false);
+      },
+      (error) => {
+        const message = error.code === 1
+          ? "Location permission was denied. Allow location access in your browser, or choose your area manually."
+          : error.code === 2
+            ? "Your location could not be determined. Check device location settings and try again."
+            : "Location request timed out. Please try again.";
+        setLocationStatus(message);
+        setLocationLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  }
+
+  function shopDistanceLabel(shop: ApprovedShop) {
+    if (!customerPosition || shop.latitude == null || shop.longitude == null) return "";
+    const toRad = (value: number) => (value * Math.PI) / 180;
+    const dLat = toRad(Number(shop.latitude) - customerPosition.latitude);
+    const dLon = toRad(Number(shop.longitude) - customerPosition.longitude);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(customerPosition.latitude)) * Math.cos(toRad(Number(shop.latitude))) * Math.sin(dLon / 2) ** 2;
+    const km = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return km < 1 ? Math.round(km * 1000) + " m away" : km.toFixed(1) + " km away";
+  }
 
   const comparisonAreas = useMemo(
     () => ["All areas", ...Array.from(new Set(livePrices.map((item) => item.area))).sort()],
@@ -220,11 +270,15 @@ export default function Home() {
           <span className="location-pill">Choose your area</span>
         </div>
         <div className="shop-area-filter">
+          <button className="primary-button nearby-location-button" type="button" onClick={findNearbyShops} disabled={locationLoading}>
+            {locationLoading ? "Finding location..." : customerPosition ? "Refresh my location" : "Use my current location"}
+          </button>
           <label htmlFor="shop-area-select">Your area in Trichy</label>
           <select id="shop-area-select" value={selectedShopArea} onChange={(event) => setSelectedShopArea(event.target.value)}>
             {shopAreas.map((area) => <option key={area} value={area}>{area}</option>)}
           </select>
           <span>{selectedShopArea === "All areas" ? "Showing shops across all listed areas" : "Showing approved shops in " + selectedShopArea}</span>
+          {locationStatus && <p className="shop-location-status" role="status">{locationStatus}</p>}
         </div>
         {shopsLoading ? (
           <p className="shops-status">Loading approved shops...</p>
@@ -243,6 +297,7 @@ export default function Home() {
                   <span className="approved-label">APPROVED SHOP</span>
                   <h3>{shop.shop_name}</h3>
                   <p className="approved-shop-area">{shop.area}, Tiruchirappalli</p>
+                  {customerPosition && <p className="approved-shop-distance">{shopDistanceLabel(shop) || "Shop GPS location not added yet"}</p>}
                   <p className="approved-shop-products"><strong>Products:</strong> {shop.products || "Details not provided"}</p>
                 </div>
               </article>
