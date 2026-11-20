@@ -49,6 +49,7 @@ export default function Home() {
   const [pricesLoading, setPricesLoading] = useState(true);
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
+  const [selectedShopArea, setSelectedShopArea] = useState("All areas");
   const [shoppingList, setShoppingList] = useState<Record<string, { name: string; unit: string; quantity: number }>>({});
   const [shoppingListReady, setShoppingListReady] = useState(false);
 
@@ -103,6 +104,16 @@ export default function Home() {
     }
     loadPublicPrices();
   }, []);
+
+  const shopAreas = useMemo(
+    () => ["All areas", ...Array.from(new Set(approvedShops.map((shop) => shop.area.trim()).filter(Boolean))).sort()],
+    [approvedShops]
+  );
+
+  const filteredApprovedShops = useMemo(
+    () => approvedShops.filter((shop) => selectedShopArea === "All areas" || shop.area.trim() === selectedShopArea),
+    [approvedShops, selectedShopArea]
+  );
 
   const comparisonAreas = useMemo(
     () => ["All areas", ...Array.from(new Set(livePrices.map((item) => item.area))).sort()],
@@ -205,8 +216,15 @@ export default function Home() {
 
       <section className="approved-shops-section" id="approved-shops">
         <div className="section-heading">
-          <div><span className="eyebrow">VERIFIED LOCAL STORES</span><h2>Approved shops in Trichy</h2></div>
-          <span className="location-pill">Shop listings</span>
+          <div><span className="eyebrow">FIND SHOPS IN YOUR AREA</span><h2>Nearby approved shops</h2></div>
+          <span className="location-pill">Choose your area</span>
+        </div>
+        <div className="shop-area-filter">
+          <label htmlFor="shop-area-select">Your area in Trichy</label>
+          <select id="shop-area-select" value={selectedShopArea} onChange={(event) => setSelectedShopArea(event.target.value)}>
+            {shopAreas.map((area) => <option key={area} value={area}>{area}</option>)}
+          </select>
+          <span>{selectedShopArea === "All areas" ? "Showing shops across all listed areas" : "Showing approved shops in " + selectedShopArea}</span>
         </div>
         {shopsLoading ? (
           <p className="shops-status">Loading approved shops...</p>
@@ -214,9 +232,11 @@ export default function Home() {
           <p className="shops-status">{shopsError}</p>
         ) : approvedShops.length === 0 ? (
           <p className="shops-status">No approved shops yet. Local shop listings will appear here after approval.</p>
+        ) : filteredApprovedShops.length === 0 ? (
+          <p className="shops-status">No approved shops listed in this area yet. Choose another area to explore nearby stores.</p>
         ) : (
           <div className="approved-shop-grid">
-            {approvedShops.map((shop) => (
+            {filteredApprovedShops.map((shop) => (
               <article className="approved-shop-card" key={shop.id}>
                 <div className="approved-shop-icon">🏪</div>
                 <div className="approved-shop-copy">
