@@ -9,6 +9,8 @@ create table if not exists public.shop_owner_users (
 
 alter table public.shop_owner_users enable row level security;
 
+grant select on table public.shop_owner_users to authenticated;
+
 drop policy if exists "Owners can read their own shop assignment" on public.shop_owner_users;
 create policy "Owners can read their own shop assignment"
 on public.shop_owner_users
