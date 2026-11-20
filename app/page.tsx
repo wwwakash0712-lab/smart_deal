@@ -43,7 +43,7 @@ export default function Home() {
         .order("created_at", { ascending: false });
 
       if (error) {
-        setShopsError("Approved shops are temporarily unavailable.");
+        setShopsError(`Database error: ${error.message}${error.code ? ` (code: ${error.code})` : ""}`);
       } else {
         setApprovedShops((data ?? []) as ApprovedShop[]);
       }
