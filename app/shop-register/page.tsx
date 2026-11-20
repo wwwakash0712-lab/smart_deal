@@ -12,10 +12,11 @@ export default function ShopRegisterPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
+    const formData = new FormData(formElement);
     setIsSubmitting(true);
     setErrorMessage("");
 
-    const formData = new FormData(event.currentTarget);
     const shop = {
       shop_name: String(formData.get("shopName") ?? "").trim(),
       owner_name: String(formData.get("ownerName") ?? "").trim(),
@@ -36,8 +37,8 @@ export default function ShopRegisterPage() {
       return;
     }
 
+    formElement.reset();
     setSubmitted(true);
-    event.currentTarget.reset();
   }
 
   return (
