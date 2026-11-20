@@ -50,6 +50,30 @@ export default function Home() {
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
   const [shoppingList, setShoppingList] = useState<Record<string, { name: string; unit: string; quantity: number }>>({});
+  const [shoppingListReady, setShoppingListReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("smart-deal-shopping-list");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) setShoppingList(parsed);
+      }
+    } catch {
+      window.localStorage.removeItem("smart-deal-shopping-list");
+    } finally {
+      setShoppingListReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!shoppingListReady) return;
+    try {
+      window.localStorage.setItem("smart-deal-shopping-list", JSON.stringify(shoppingList));
+    } catch {
+      // The shopping list remains usable if browser storage is unavailable.
+    }
+  }, [shoppingList, shoppingListReady]);
 
   useEffect(() => {
     async function loadApprovedShops() {
@@ -269,7 +293,9 @@ export default function Home() {
           <div><span className="eyebrow">PLAN YOUR PURCHASE</span><h2>My shopping list</h2></div>
           <span className="location-pill">{shoppingItems.length} {shoppingItems.length === 1 ? "item" : "items"}</span>
         </div>
-        {shoppingItems.length === 0 ? (
+        {!shoppingListReady ? (
+          <p className="shops-status">Loading your saved shopping list...</p>
+        ) : shoppingItems.length === 0 ? (
           <p className="shops-status">Your list is empty. Add products using the “Add to shopping list” button in the price comparison section.</p>
         ) : (
           <>
