@@ -37,7 +37,7 @@ export default function Home() {
   useEffect(() => {
     async function loadApprovedShops() {
       const { data, error } = await supabase
-        .from("shops")
+        .from("approved_shops")
         .select("id, shop_name, area, products, created_at")
         .eq("status", "approved")
         .order("created_at", { ascending: false });
