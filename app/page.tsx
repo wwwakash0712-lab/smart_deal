@@ -39,7 +39,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from("approved_shops")
         .select("id, shop_name, area, products, created_at")
-        .eq("status", "approved")
+        
         .order("created_at", { ascending: false });
 
       if (error) {
