@@ -1,14 +1,43 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 export default function ShopRegisterPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage("");
+
+    const formData = new FormData(event.currentTarget);
+    const shop = {
+      shop_name: String(formData.get("shopName") ?? "").trim(),
+      owner_name: String(formData.get("ownerName") ?? "").trim(),
+      mobile: String(formData.get("mobile") ?? "").trim(),
+      address: String(formData.get("address") ?? "").trim(),
+      area: String(formData.get("area") ?? "").trim(),
+      products: String(formData.get("products") ?? "").trim(),
+      status: "pending",
+    };
+
+    const { error } = await supabase.from("shops").insert(shop);
+
+    setIsSubmitting(false);
+
+    if (error) {
+      setErrorMessage("Registration could not be saved. Please check your connection and try again.");
+      console.error("Shop registration error:", error.message);
+      return;
+    }
+
     setSubmitted(true);
+    event.currentTarget.reset();
   }
 
   return (
@@ -34,10 +63,10 @@ export default function ShopRegisterPage() {
           {submitted ? (
             <div className="register-success" role="status">
               <div className="success-icon">✓</div>
-              <span className="eyebrow">REGISTRATION DEMO</span>
-              <h2>Details received on this screen</h2>
-              <p>This is a preview only. Your details have not been saved or sent to WhatsApp yet. Server storage, admin review and WhatsApp notification will be connected in the next development step.</p>
-              <button className="primary-button" onClick={() => setSubmitted(false)}>Back to form</button>
+              <span className="eyebrow">REGISTRATION RECEIVED</span>
+              <h2>Thank you for registering!</h2>
+              <p>Your shop details have been saved and are waiting for admin approval. Your shop will appear publicly only after it is approved.</p>
+              <button className="primary-button" onClick={() => setSubmitted(false)}>Register another shop</button>
             </div>
           ) : (
             <>
@@ -51,8 +80,11 @@ export default function ShopRegisterPage() {
                 <label>Shop address<textarea name="address" rows={3} placeholder="Door no, street and nearby landmark" required /></label>
                 <label>Area in Trichy<input name="area" placeholder="e.g. Srirangam, Thillai Nagar" required /></label>
                 <label>Products you sell<input name="products" placeholder="e.g. Rice, oil, groceries, vegetables" required /></label>
-                <button className="primary-button submit-registration" type="submit">Submit registration <span>→</span></button>
-                <p className="privacy-note">Submitting this demo form does not yet send or store your information.</p>
+                {errorMessage && <p className="privacy-note" role="alert">{errorMessage}</p>}
+                <button className="primary-button submit-registration" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? "Submitting..." : "Submit registration"} <span>→</span>
+                </button>
+                <p className="privacy-note">Your details are stored securely for review. They are not displayed publicly before approval.</p>
               </form>
             </>
           )}
