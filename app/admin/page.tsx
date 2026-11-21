@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type PriceReport = { id: string; shop_id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; has_notification?: boolean; };
+type ShopReview = { id: string; shop_id: string; customer_name: string; rating: number; review: string; status: string; created_at: string; };
 
 type Shop = {
   id: string;
@@ -23,6 +24,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const [shops, setShops] = useState<Shop[]>([]);
   const [priceReports, setPriceReports] = useState<PriceReport[]>([]);
+  const [shopReviews, setShopReviews] = useState<ShopReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
@@ -56,6 +58,32 @@ export default function AdminDashboardPage() {
     setMessage("Correction request sent to " + report.shop_name + ".");
     await supabase.from("price_issue_reports").update({ status: "reviewed" }).eq("id", report.id);
     await loadPriceReports();
+  }
+
+  const loadShopReviews = useCallback(async () => {
+    const { data, error } = await supabase.from("shop_reviews")
+      .select("id, shop_id, customer_name, rating, review, status, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (error) {
+      setErrorMessage("Could not load customer reviews: " + error.message);
+      return;
+    }
+    setShopReviews((data ?? []) as ShopReview[]);
+  }, []);
+
+  async function moderateShopReview(reviewId: string, status: "approved" | "rejected") {
+    setBusyId(reviewId);
+    setMessage("");
+    setErrorMessage("");
+    const { error } = await supabase.from("shop_reviews").update({ status }).eq("id", reviewId);
+    setBusyId("");
+    if (error) {
+      setErrorMessage("Could not update review: " + error.message);
+      return;
+    }
+    setMessage(status === "approved" ? "Customer review approved." : "Customer review rejected.");
+    await loadShopReviews();
   }
 
   const loadPendingShops = useCallback(async () => {
@@ -102,12 +130,13 @@ export default function AdminDashboardPage() {
 
       await loadPendingShops();
       await loadPriceReports();
+      await loadShopReviews();
       if (active) setLoading(false);
     }
 
     initialise();
     return () => { active = false; };
-  }, [router, loadPendingShops, loadPriceReports]);
+  }, [router, loadPendingShops, loadPriceReports, loadShopReviews]);
 
   async function reviewShop(shopId: string, status: "approved" | "rejected") {
     setBusyId(shopId);
@@ -169,6 +198,27 @@ export default function AdminDashboardPage() {
                 </div>
                 {!report.has_notification && <div className="admin-actions"><button className="admin-approve" disabled={busyId === report.id} onClick={() => notifyShopOwner(report)}>{busyId === report.id ? "Sending..." : "Notify shop owner"}</button></div>}
                 {report.has_notification && <p className="admin-success">Shop owner has been notified.</p>}
+              </article>
+            ))}
+          </div>
+        )}
+        <div className="admin-list-heading"><h2>Customer reviews</h2><span>{shopReviews.length} waiting</span></div>
+        {shopReviews.length === 0 ? (
+          <div className="admin-empty">No customer reviews waiting for approval.</div>
+        ) : (
+          <div className="admin-shop-list">
+            {shopReviews.map((review) => (
+              <article className="admin-shop-card" key={review.id}>
+                <div className="admin-shop-top"><div><span className="eyebrow">CUSTOMER REVIEW</span><h3>{review.customer_name} · {"★".repeat(Number(review.rating))}</h3></div><span className="admin-pending">pending</span></div>
+                <div className="admin-shop-details">
+                  <p><strong>Shop ID:</strong> {review.shop_id}</p>
+                  <p><strong>Review:</strong> {review.review}</p>
+                  <p><strong>Submitted:</strong> {new Date(review.created_at).toLocaleString("en-IN")}</p>
+                </div>
+                <div className="admin-actions">
+                  <button className="admin-approve" disabled={busyId === review.id} onClick={() => moderateShopReview(review.id, "approved")}>Approve review</button>
+                  <button className="admin-reject" disabled={busyId === review.id} onClick={() => moderateShopReview(review.id, "rejected")}>Reject</button>
+                </div>
               </article>
             ))}
           </div>
