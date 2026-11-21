@@ -30,7 +30,11 @@ export default function AdminDashboardPage() {
 
   const loadPriceReports = useCallback(async () => {
     const { data, error } = await supabase.from("price_issue_reports").select("id, shop_name, product_name, category, unit, displayed_price, report_reason, status, created_at").order("created_at", { ascending: false });
-    if (!error) setPriceReports((data ?? []) as PriceReport[]);
+    if (error) {
+      setErrorMessage("Could not load customer price reports: " + error.message);
+      return;
+    }
+    setPriceReports((data ?? []) as PriceReport[]);
   }, []);
 
   async function markReportReviewed(reportId: string) {
@@ -82,12 +86,13 @@ export default function AdminDashboardPage() {
       }
 
       await loadPendingShops();
+      await loadPriceReports();
       if (active) setLoading(false);
     }
 
     initialise();
     return () => { active = false; };
-  }, [router, loadPendingShops]);
+  }, [router, loadPendingShops, loadPriceReports]);
 
   async function reviewShop(shopId: string, status: "approved" | "rejected") {
     setBusyId(shopId);
@@ -130,6 +135,28 @@ export default function AdminDashboardPage() {
         <p className="admin-subtitle">Review new shop registrations before they appear to customers.</p>
         {message && <p className="admin-success" role="status">{message}</p>}
         {errorMessage && <p className="admin-error" role="alert">{errorMessage}</p>}
+        <div className="admin-list-heading"><h2>Customer price reports</h2><span>{priceReports.filter((report) => report.status === "pending").length} pending</span></div>
+        {priceReports.length === 0 ? (
+          <div className="admin-empty">No customer price reports yet.</div>
+        ) : (
+          <div className="admin-shop-list">
+            {priceReports.map((report) => (
+              <article className="admin-shop-card" key={report.id}>
+                <div className="admin-shop-top">
+                  <div><span className="eyebrow">PRICE ISSUE REPORT</span><h3>{report.product_name} · {report.shop_name}</h3></div>
+                  <span className={report.status === "pending" ? "admin-pending" : "admin-approved"}>{report.status}</span>
+                </div>
+                <div className="admin-shop-details">
+                  <p><strong>Displayed price:</strong> ₹{Number(report.displayed_price).toFixed(2)} / {report.unit}</p>
+                  <p><strong>Category:</strong> {report.category}</p>
+                  <p><strong>Customer reason:</strong> {report.report_reason}</p>
+                  <p><strong>Reported:</strong> {new Date(report.created_at).toLocaleString("en-IN")}</p>
+                </div>
+                {report.status === "pending" && <div className="admin-actions"><button className="admin-approve" disabled={busyId === report.id} onClick={() => markReportReviewed(report.id)}>{busyId === report.id ? "Please wait..." : "Mark reviewed"}</button></div>}
+              </article>
+            ))}
+          </div>
+        )}
         <div className="admin-list-heading"><h2>Pending registrations</h2><span>{shops.length} waiting</span></div>
         {shops.length === 0 ? (
           <div className="admin-empty">No pending shop registrations right now.</div>
