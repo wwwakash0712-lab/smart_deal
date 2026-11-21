@@ -217,7 +217,11 @@ export default function Home() {
 
   const shoppingItems = Object.entries(shoppingList);
   const basketComparisons = useMemo(() => {
-    const shops = new Map<string, { shopName: string; area: string; total: number; pricedKeys: Set<string> }>();
+    const shops = new Map<string, { shopName: string; area: string; total: number; pricedKeys: Set<string> }>(
+      approvedShops.map((shop) => [shop.id, {
+        shopName: shop.shop_name, area: shop.area, total: 0, pricedKeys: new Set<string>(),
+      }])
+    );
     const basket = Object.entries(shoppingList);
     livePrices.forEach((price) => {
       const shop = shops.get(price.shop_id) ?? {
@@ -238,7 +242,7 @@ export default function Home() {
         available: shop.pricedKeys.size, complete: missingItems.length === 0, missingItems,
       };
     }).sort((a, b) => a.complete !== b.complete ? (a.complete ? -1 : 1) : a.total - b.total);
-  }, [livePrices, shoppingList]);
+  }, [approvedShops, livePrices, shoppingList]);
   const cheapestCompleteBasket = basketComparisons.find((shop) => shop.complete);
   const basketSavings = cheapestCompleteBasket
     ? Math.max(0, ...basketComparisons.filter((shop) => shop.complete).map((shop) => shop.total)) - cheapestCompleteBasket.total
