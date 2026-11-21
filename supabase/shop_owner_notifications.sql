@@ -43,3 +43,15 @@ with check (exists (
   where admin_users.user_id = auth.uid()
 ));
 
+
+
+-- Allow admins to view notification records so the dashboard can show
+-- whether each price report has already been sent to its shop owner.
+grant select on public.shop_owner_notifications to authenticated;
+drop policy if exists "Admins can view shop owner notifications" on public.shop_owner_notifications;
+create policy "Admins can view shop owner notifications"
+on public.shop_owner_notifications for select to authenticated
+using (exists (
+  select 1 from public.admin_users
+  where admin_users.user_id = auth.uid()
+));
