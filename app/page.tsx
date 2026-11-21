@@ -442,7 +442,13 @@ export default function Home() {
               onChange={(event) => setCompareSearch(event.target.value)}
               placeholder="Search product, shop or area..."
               aria-label="Search live prices"
+              list="smart-deal-product-suggestions"
             />
+            <datalist id="smart-deal-product-suggestions">
+              {Array.from(new Set(livePrices.map((item) => item.product_name.trim()).filter(Boolean)))
+                .sort((a, b) => a.localeCompare(b))
+                .map((productName) => <option key={productName} value={productName} />)}
+            </datalist>
             {compareSearch && <button onClick={() => setCompareSearch("")} aria-label="Clear comparison search">×</button>}
           </label>
           <label className="comparison-area-label">
