@@ -213,6 +213,14 @@ export default function Home() {
       .sort((a, b) => a.complete !== b.complete ? (a.complete ? -1 : 1) : a.total - b.total);
   }, [livePrices, shoppingList]);
 
+  function priceFreshness(updatedAt: string) {
+    const ageDays = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86400000);
+    if (!Number.isFinite(ageDays) || ageDays < 0) return { label: "Update date unavailable", stale: false };
+    if (ageDays > 7) return { label: "Price may be outdated · " + ageDays + " days ago", stale: true };
+    if (ageDays <= 1) return { label: "Recently updated", stale: false };
+    return { label: "Updated " + ageDays + " days ago", stale: false };
+  }
+
   function addToShoppingList(item: PublicPrice) {
     const key = item.product_name.trim().toLowerCase() + "__" + item.unit.trim().toLowerCase();
     setShoppingList((current) => ({ ...current, [key]: { name: item.product_name, unit: item.unit, quantity: current[key]?.quantity ?? 1 } }));
@@ -342,12 +350,12 @@ export default function Home() {
                   <div className="comparison-shop-list">
                     {items.map((item, index) => (
                       <div className={index === 0 ? "comparison-shop best-price" : "comparison-shop"} key={item.id}>
-                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span></div>
+                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span><span className={priceFreshness(item.updated_at).stale ? "price-freshness stale" : "price-freshness"}>{priceFreshness(item.updated_at).label}</span></div>
                         <strong className="comparison-price">₹{Number(item.price).toFixed(2)}</strong>
                       </div>
                     ))}
                   </div>
-                  <p className="comparison-updated">Prices last updated by shops · {new Date(items[0].updated_at).toLocaleDateString("en-IN")}</p>
+                  <p className="comparison-updated">Each shop shows its own price update status.</p>
                 </article>
               );
             })}
