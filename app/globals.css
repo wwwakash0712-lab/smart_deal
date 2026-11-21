@@ -296,3 +296,36 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 .shop-review-form button{border:0;border-radius:7px;padding:10px;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
 .shop-review-form button:disabled{opacity:.5;cursor:not-allowed}
 .shop-review-notice{font-size:10px;line-height:1.5;color:var(--green);margin:7px 0}
+
+
+/* Customer-facing stock availability badges */
+.stock-status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.1px;
+}
+
+.stock-status.in_stock {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+}
+
+.stock-status.low_stock {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+}
+
+.stock-status.out_of_stock {
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+}
