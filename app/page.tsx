@@ -217,18 +217,32 @@ export default function Home() {
 
   const shoppingItems = Object.entries(shoppingList);
   const basketComparisons = useMemo(() => {
-    const shops = new Map<string, { shopName: string; area: string; total: number; available: number }>();
+    const shops = new Map<string, { shopName: string; area: string; total: number; pricedKeys: Set<string> }>();
     const basket = Object.entries(shoppingList);
     livePrices.forEach((price) => {
-      const shop = shops.get(price.shop_id) ?? { shopName: price.shop_name, area: price.area, total: 0, available: 0 };
+      const shop = shops.get(price.shop_id) ?? {
+        shopName: price.shop_name, area: price.area, total: 0, pricedKeys: new Set<string>(),
+      };
       const key = price.product_name.trim().toLowerCase() + "__" + price.unit.trim().toLowerCase();
       const requested = shoppingList[key];
-      if (requested) { shop.total += Number(price.price) * requested.quantity; shop.available += 1; }
+      if (requested && !shop.pricedKeys.has(key)) {
+        shop.total += Number(price.price) * requested.quantity;
+        shop.pricedKeys.add(key);
+      }
       shops.set(price.shop_id, shop);
     });
-    return Array.from(shops.entries()).map(([id, shop]) => ({ id, ...shop, complete: shop.available === basket.length }))
-      .sort((a, b) => a.complete !== b.complete ? (a.complete ? -1 : 1) : a.total - b.total);
+    return Array.from(shops.entries()).map(([id, shop]) => {
+      const missingItems = basket.filter(([key]) => !shop.pricedKeys.has(key)).map(([, item]) => item.name);
+      return {
+        id, shopName: shop.shopName, area: shop.area, total: shop.total,
+        available: shop.pricedKeys.size, complete: missingItems.length === 0, missingItems,
+      };
+    }).sort((a, b) => a.complete !== b.complete ? (a.complete ? -1 : 1) : a.total - b.total);
   }, [livePrices, shoppingList]);
+  const cheapestCompleteBasket = basketComparisons.find((shop) => shop.complete);
+  const basketSavings = cheapestCompleteBasket
+    ? Math.max(0, ...basketComparisons.filter((shop) => shop.complete).map((shop) => shop.total)) - cheapestCompleteBasket.total
+    : 0;
 
   function priceFreshness(updatedAt: string) {
     const ageDays = Math.floor((Date.now() - new Date(updatedAt).getTime()) / 86400000);
@@ -493,12 +507,22 @@ export default function Home() {
               <h3>Shop-wise basket total</h3>
               <p className="basket-help">Totals are shown only when that shop has a price for every item in your list.</p>
               {basketComparisons.length === 0 ? <p className="shops-status">No shop prices are available for this list yet.</p> : basketComparisons.map((shop) => (
-                <div className={shop.complete ? "basket-shop complete" : "basket-shop"} key={shop.id}>
-                  <div><strong>{shop.shopName}</strong><span>{shop.area} · {shop.available}/{shoppingItems.length} items priced</span></div>
+                <div className={shop.id === cheapestCompleteBasket?.id ? "basket-shop complete cheapest-basket" : shop.complete ? "basket-shop complete" : "basket-shop"} key={shop.id}>
+                  <div>
+                    <strong>{shop.shopName} {shop.id === cheapestCompleteBasket?.id && <span className="basket-best-label">LOWEST TOTAL</span>}</strong>
+                    <span>{shop.area} · {shop.available}/{shoppingItems.length} items priced</span>
+                    {!shop.complete && <small className="basket-missing">Missing: {shop.missingItems.join(", ")}</small>}
+                  </div>
                   {shop.complete ? <strong className="basket-total">₹{shop.total.toFixed(2)}</strong> : <span className="basket-missing">Incomplete basket</span>}
                 </div>
               ))}
-              {basketComparisons.some((shop) => shop.complete) && <p className="basket-footnote">Lowest complete-basket total is listed first. Prices may change when shops update them.</p>}
+              {cheapestCompleteBasket && (
+                <p className="basket-footnote">
+                  Lowest complete basket: {cheapestCompleteBasket.shopName} at ₹{cheapestCompleteBasket.total.toFixed(2)}.
+                  {basketSavings > 0 ? ` You save ₹${basketSavings.toFixed(2)} compared with the highest complete basket.` : " Prices are currently equal across complete baskets."}
+                  {" "}Prices may change when shops update them.
+                </p>
+              )}
             </div>
             <button className="clear-shopping-list" onClick={() => setShoppingList({})}>Clear shopping list</button>
           </>
