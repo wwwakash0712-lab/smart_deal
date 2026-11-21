@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-type Product = { id: string; product_name: string; category: string; unit: string; price: number; updated_at: string };
+type Product = { id: string; product_name: string; category: string; unit: string; price: number; stock_status: "in_stock" | "low_stock" | "out_of_stock"; updated_at: string };
 type OwnerNotification = { id: string; message: string; is_read: boolean; created_at: string };
 type Shop = { id: string; shop_name: string; area: string };
 
@@ -23,6 +23,7 @@ export default function ShopOwnerDashboard() {
   const [category, setCategory] = useState("Groceries");
   const [unit, setUnit] = useState("1 kg");
   const [price, setPrice] = useState("");
+  const [stockStatus, setStockStatus] = useState<"in_stock" | "low_stock" | "out_of_stock">("in_stock");
   const [locationBusy, setLocationBusy] = useState(false);
   const [locationNotice, setLocationNotice] = useState("");
   const [manualLatitude, setManualLatitude] = useState("");
@@ -51,7 +52,7 @@ export default function ShopOwnerDashboard() {
     setShop(shopData as Shop);
 
     const { data: productData, error: productError } = await supabase
-      .from("shop_products").select("id, product_name, category, unit, price, updated_at")
+      .from("shop_products").select("id, product_name, category, unit, price, stock_status, updated_at")
       .eq("shop_id", assignment.shop_id).order("updated_at", { ascending: false });
     if (productError) setError("Could not load your prices. Please check the database setup.");
     else setProducts((productData ?? []) as Product[]);
@@ -137,11 +138,12 @@ export default function ShopOwnerDashboard() {
     setCategory(product.category);
     setUnit(product.unit);
     setPrice(String(product.price));
+    setStockStatus(product.stock_status ?? "in_stock");
     setNotice("");
   }
 
   function resetForm() {
-    setEditingId(""); setName(""); setCategory("Groceries"); setUnit("1 kg"); setPrice("");
+    setEditingId(""); setName(""); setCategory("Groceries"); setUnit("1 kg"); setPrice(""); setStockStatus("in_stock");
   }
 
   async function savePrice(event: React.FormEvent<HTMLFormElement>) {
@@ -152,7 +154,7 @@ export default function ShopOwnerDashboard() {
       setError("Enter a valid price greater than zero."); return;
     }
     setBusy(true); setError(""); setNotice("");
-    const values = { product_name: name.trim(), category, unit: unit.trim(), price: numericPrice, updated_at: new Date().toISOString() };
+    const values = { product_name: name.trim(), category, unit: unit.trim(), price: numericPrice, stock_status: stockStatus, updated_at: new Date().toISOString() };
     const result = editingId
       ? await supabase.from("shop_products").update(values).eq("id", editingId).eq("shop_id", shop.id)
       : await supabase.from("shop_products").insert({ ...values, shop_id: shop.id });
@@ -226,13 +228,14 @@ export default function ShopOwnerDashboard() {
               <label>Category<select value={category} onChange={e => setCategory(e.target.value)}><option>Groceries</option><option>Rice</option><option>Cooking Oil</option><option>Dal and Pulses</option><option>Vegetables</option><option>Fruits</option><option>Home Needs</option><option>Other</option></select></label>
               <label>Unit / quantity<input value={unit} onChange={e => setUnit(e.target.value)} placeholder="e.g. 1 kg, 1 litre, 500 g" required /></label>
               <label>Price (₹)<input type="number" min="0.01" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 75" required /></label>
+              <label>Stock availability<select value={stockStatus} onChange={e => setStockStatus(e.target.value as "in_stock" | "low_stock" | "out_of_stock")}><option value="in_stock">In stock</option><option value="low_stock">Low stock</option><option value="out_of_stock">Out of stock</option></select></label>
               <div className="owner-form-actions"><button className="primary-button" type="submit" disabled={busy}>{busy ? "Saving..." : editingId ? "Save changes" : "Add price"}</button>{editingId && <button className="admin-reject" type="button" onClick={resetForm}>Cancel</button>}</div>
             </form>
           </div>
           <div className="owner-list-heading"><h2>Your listed prices</h2><span>{products.length} products</span></div>
           {products.length === 0 ? <div className="admin-empty">No prices added yet. Add your first product above.</div> : <div className="owner-product-list">
             {products.map(product => <article className="owner-product-row" key={product.id}>
-              <div><strong>{product.product_name}</strong><p>{product.category} · {product.unit} · Updated {new Date(product.updated_at).toLocaleDateString("en-IN")}</p></div>
+              <div><strong>{product.product_name}</strong><p>{product.category} · {product.unit} · Updated {new Date(product.updated_at).toLocaleDateString("en-IN")}</p><small className={"stock-status " + (product.stock_status ?? "in_stock")}>{product.stock_status === "out_of_stock" ? "Out of stock" : product.stock_status === "low_stock" ? "Low stock" : "In stock"}</small></div>
               <div className="owner-product-actions"><strong>₹{Number(product.price).toFixed(2)}</strong><button onClick={() => startEdit(product)}>Edit</button><button className="delete-price" onClick={() => deletePrice(product.id)}>Delete</button></div>
             </article>)}
           </div>}
