@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type PriceReport = { id: string; shop_id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; has_notification?: boolean; };
-type ShopReview = { id: string; shop_id: string; customer_name: string; rating: number; review: string; status: string; created_at: string; };
+type ShopReview = { id: string; shop_id: string; shop: { shop_name: string } | null; customer_name: string; rating: number; review: string; status: string; created_at: string; };
 
 type Shop = {
   id: string;
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
 
   const loadShopReviews = useCallback(async () => {
     const { data, error } = await supabase.from("shop_reviews")
-      .select("id, shop_id, customer_name, rating, review, status, created_at")
+      .select("id, shop_id, shop:shops(shop_name), customer_name, rating, review, status, created_at")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
     if (error) {
@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
               <article className="admin-shop-card" key={review.id}>
                 <div className="admin-shop-top"><div><span className="eyebrow">CUSTOMER REVIEW</span><h3>{review.customer_name} · {"★".repeat(Number(review.rating))}</h3></div><span className="admin-pending">pending</span></div>
                 <div className="admin-shop-details">
-                  <p><strong>Shop ID:</strong> {review.shop_id}</p>
+                  <p><strong>Shop name:</strong> {review.shop?.shop_name || "Shop name unavailable"}</p>
                   <p><strong>Review:</strong> {review.review}</p>
                   <p><strong>Submitted:</strong> {new Date(review.created_at).toLocaleString("en-IN")}</p>
                 </div>
