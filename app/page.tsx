@@ -398,6 +398,12 @@ export default function Home() {
                   {(() => {
                     const historyKey = items[0].product_name.trim().toLowerCase() + "__" + items[0].unit.trim().toLowerCase();
                     const historyItems = priceHistory.filter((entry) => entry.product_name.trim().toLowerCase() + "__" + entry.unit.trim().toLowerCase() === historyKey);
+                    const trendGroups = new Map<string, PriceHistory[]>();
+                    historyItems.forEach((entry) => {
+                      const group = trendGroups.get(entry.shop_id) ?? [];
+                      group.push(entry);
+                      trendGroups.set(entry.shop_id, group);
+                    });
                     return (
                       <div className="price-history-panel">
                         <button type="button" className="price-history-toggle" onClick={() => setExpandedHistoryKey(expandedHistoryKey === historyKey ? "" : historyKey)}>
@@ -405,12 +411,40 @@ export default function Home() {
                         </button>
                         {expandedHistoryKey === historyKey && (
                           <div className="price-history-list">
-                            {historyItems.length === 0 ? <p>No price history recorded yet. New price changes will appear here.</p> : historyItems.map((entry) => (
-                              <div className="price-history-row" key={entry.id}>
-                                <span><strong>{entry.shop_name}</strong><small>{new Date(entry.recorded_at).toLocaleDateString("en-IN")}</small></span>
-                                <strong>₹{Number(entry.price).toFixed(2)}</strong>
-                              </div>
-                            ))}
+                            {historyItems.length === 0 ? <p>No price history recorded yet. New price changes will appear here.</p> : (
+                              <>
+                                <div className="price-trend-charts">
+                                  {Array.from(trendGroups.entries()).map(([shopId, entries]) => {
+                                    const sorted = [...entries].sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+                                    const values = sorted.map((entry) => Number(entry.price));
+                                    const minPrice = Math.min(...values);
+                                    const maxPrice = Math.max(...values);
+                                    const range = maxPrice - minPrice || 1;
+                                    const coordinates = values.map((value, index) => ({
+                                      x: sorted.length === 1 ? 160 : 12 + (index / (sorted.length - 1)) * 296,
+                                      y: 82 - ((value - minPrice) / range) * 64,
+                                    }));
+                                    return (
+                                      <div className="price-trend-card" key={shopId}>
+                                        <div className="price-trend-heading"><strong>{sorted[0].shop_name}</strong><span>{sorted.length} recorded prices</span></div>
+                                        <svg viewBox="0 0 320 100" role="img" aria-label={sorted[0].shop_name + " price trend chart"}>
+                                          {coordinates.length > 1 && <polyline points={coordinates.map((point) => point.x + "," + point.y).join(" ")} fill="none" stroke="#23734f" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />}
+                                          {coordinates.map((point, index) => <circle key={sorted[index].id} cx={point.x} cy={point.y} r="4" fill="#23734f" />)}
+                                        </svg>
+                                        <div className="price-trend-values"><span>₹{minPrice.toFixed(2)} low</span><strong>₹{Number(sorted[sorted.length - 1].price).toFixed(2)} latest</strong><span>₹{maxPrice.toFixed(2)} high</span></div>
+                                        <small className="price-trend-dates">{new Date(sorted[0].recorded_at).toLocaleDateString("en-IN")} – {new Date(sorted[sorted.length - 1].recorded_at).toLocaleDateString("en-IN")}</small>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                                {historyItems.map((entry) => (
+                                  <div className="price-history-row" key={entry.id}>
+                                    <span><strong>{entry.shop_name}</strong><small>{new Date(entry.recorded_at).toLocaleDateString("en-IN")}</small></span>
+                                    <strong>₹{Number(entry.price).toFixed(2)}</strong>
+                                  </div>
+                                ))}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
