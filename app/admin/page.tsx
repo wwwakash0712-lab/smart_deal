@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-type PriceReport = { id: string; shop_id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; };
+type PriceReport = { id: string; shop_id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; has_notification?: boolean; };
 
 type Shop = {
   id: string;
@@ -34,7 +34,9 @@ export default function AdminDashboardPage() {
       setErrorMessage("Could not load customer price reports: " + error.message);
       return;
     }
-    setPriceReports((data ?? []) as PriceReport[]);
+    const { data: notificationData } = await supabase.from("shop_owner_notifications").select("report_id");
+    const notifiedReportIds = new Set((notificationData ?? []).map((item: { report_id: string }) => item.report_id));
+    setPriceReports(((data ?? []) as PriceReport[]).map((report) => ({ ...report, has_notification: notifiedReportIds.has(report.id) })));
   }, []);
 
   async function notifyShopOwner(report: PriceReport) {
@@ -165,7 +167,8 @@ export default function AdminDashboardPage() {
                   <p><strong>Customer reason:</strong> {report.report_reason}</p>
                   <p><strong>Reported:</strong> {new Date(report.created_at).toLocaleString("en-IN")}</p>
                 </div>
-                {report.status === "pending" && <div className="admin-actions"><button className="admin-approve" disabled={busyId === report.id} onClick={() => notifyShopOwner(report)}>{busyId === report.id ? "Sending..." : "Notify shop owner"}</button></div>}
+                {!report.has_notification && <div className="admin-actions"><button className="admin-approve" disabled={busyId === report.id} onClick={() => notifyShopOwner(report)}>{busyId === report.id ? "Sending..." : "Notify shop owner"}</button></div>}
+                {report.has_notification && <p className="admin-success">Shop owner has been notified.</p>}
               </article>
             ))}
           </div>
