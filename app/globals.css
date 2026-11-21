@@ -257,3 +257,15 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 .price-history-row small { color: #777; font-size: 12px; }
 .price-history-row > strong { white-space: nowrap; }
 .price-history-list > p { color: #777; font-size: 13px; }
+
+
+/* Customer price trend charts */
+.price-trend-charts{display:grid;gap:12px;margin:12px 0}
+.price-trend-card{border:1px solid var(--line);border-radius:10px;background:#fbfcfa;padding:12px}
+.price-trend-heading,.price-trend-values{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.price-trend-heading strong{font-size:12px}
+.price-trend-heading span,.price-trend-dates{font-size:10px;color:var(--muted)}
+.price-trend-card svg{display:block;width:100%;height:110px;margin:5px 0}
+.price-trend-values{font-size:10px;color:var(--muted)}
+.price-trend-values strong{font-size:12px;color:var(--green)}
+.price-trend-dates{display:block;margin-top:7px}
