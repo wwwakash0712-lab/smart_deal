@@ -479,7 +479,7 @@ export default function Home() {
                   <div className="comparison-shop-list">
                     {items.map((item, index) => (
                       <div className={index === 0 ? "comparison-shop best-price" : "comparison-shop"} key={item.id}>
-                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span><span className={"stock-status " + item.stock_status}>{item.stock_status === "out_of_stock" ? "Check with Store" : item.stock_status === "low_stock" ? "Buy Quickly!" : "Available"}</span><span className={priceFreshness(item.updated_at).stale ? "price-freshness stale" : "price-freshness"}>{priceFreshness(item.updated_at).label}</span></div>
+                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span>{item.stock_status === "out_of_stock" ? <><span className="stock-status out_of_stock">Out of Stock</span><span className="stock-status-note">Check with Store</span></> : <span className={"stock-status " + item.stock_status}>{item.stock_status === "low_stock" ? "Buy Quickly!" : "Available"}</span>}<span className={priceFreshness(item.updated_at).stale ? "price-freshness stale" : "price-freshness"}>{priceFreshness(item.updated_at).label}</span></div>
                         <strong className="comparison-price">₹{Number(item.price).toFixed(2)}</strong>
                       </div>
                     ))}
