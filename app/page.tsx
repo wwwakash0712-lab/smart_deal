@@ -39,6 +39,7 @@ export default function Home() {
   const [compareArea, setCompareArea] = useState("All areas");
   const [compareCategory, setCompareCategory] = useState("All categories");
   const [selectedShopArea, setSelectedShopArea] = useState("All areas");
+  const [shopSearch, setShopSearch] = useState("");
   const [customerPosition, setCustomerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState("");
   const [locationLoading, setLocationLoading] = useState(false);
@@ -126,10 +127,14 @@ export default function Home() {
   }, [approvedShops]);
 
   const filteredApprovedShops = useMemo(() => {
-    const filtered = approvedShops.filter((shop) =>
-      selectedShopArea === "All areas" ||
-      shop.area.trim().toLocaleLowerCase() === selectedShopArea.trim().toLocaleLowerCase()
-    );
+    const term = shopSearch.trim().toLocaleLowerCase();
+    const filtered = approvedShops.filter((shop) => {
+      const matchesArea = selectedShopArea === "All areas" ||
+        shop.area.trim().toLocaleLowerCase() === selectedShopArea.trim().toLocaleLowerCase();
+      const matchesSearch = !term || shop.shop_name.toLocaleLowerCase().includes(term) ||
+        shop.area.toLocaleLowerCase().includes(term) || (shop.products ?? "").toLocaleLowerCase().includes(term);
+      return matchesArea && matchesSearch;
+    });
     if (!customerPosition) return filtered;
     const distance = (shop: ApprovedShop) => {
       if (shop.latitude == null || shop.longitude == null) return Number.POSITIVE_INFINITY;
@@ -140,7 +145,7 @@ export default function Home() {
       return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     };
     return [...filtered].sort((a, b) => distance(a) - distance(b));
-  }, [approvedShops, selectedShopArea, customerPosition]);
+  }, [approvedShops, selectedShopArea, shopSearch, customerPosition]);
 
   function findNearbyShops() {
     if (!("geolocation" in navigator)) {
@@ -323,11 +328,12 @@ export default function Home() {
           <button className="primary-button nearby-location-button" type="button" onClick={findNearbyShops} disabled={locationLoading}>
             {locationLoading ? "Finding location..." : customerPosition ? "Refresh my location" : "Use my current location"}
           </button>
+          <input className="shop-search-input" value={shopSearch} onChange={(event) => setShopSearch(event.target.value)} placeholder="Search shop name or product..." aria-label="Search approved shops" />
           <label htmlFor="shop-area-select">Or choose your area manually</label>
           <select id="shop-area-select" value={selectedShopArea} onChange={(event) => setSelectedShopArea(event.target.value)}>
             {shopAreas.map((area) => <option key={area} value={area}>{area}</option>)}
           </select>
-          <span>{selectedShopArea === "All areas" ? "Showing shops across all listed areas" : "Showing approved shops in " + selectedShopArea}</span>
+          <span>Showing {filteredApprovedShops.length} approved shop{filteredApprovedShops.length === 1 ? "" : "s"}{selectedShopArea === "All areas" ? " across all areas" : " in " + selectedShopArea}</span>
           {locationStatus && <p className="shop-location-status" role="status">{locationStatus}</p>}
         </div>
         {shopsLoading ? (
@@ -337,7 +343,7 @@ export default function Home() {
         ) : approvedShops.length === 0 ? (
           <p className="shops-status">No approved shops yet. Local shop listings will appear here after approval.</p>
         ) : filteredApprovedShops.length === 0 ? (
-          <p className="shops-status">No approved shops listed in this area yet. Choose another area to explore nearby stores.</p>
+          <p className="shops-status">No matching approved shops. Try another shop name, product, or area.</p>
         ) : (
           <div className="approved-shop-grid">
             {filteredApprovedShops.map((shop) => (
