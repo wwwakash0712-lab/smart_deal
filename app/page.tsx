@@ -23,6 +23,7 @@ type PublicPrice = {
   category: string;
   unit: string;
   price: number;
+  stock_status: "in_stock" | "low_stock" | "out_of_stock";
   updated_at: string;
   shop_name: string;
   area: string;
@@ -102,7 +103,7 @@ export default function Home() {
     async function loadPublicPrices() {
       const { data, error } = await supabase
         .from("public_shop_prices")
-        .select("id, shop_id, product_name, category, unit, price, updated_at, shop_name, area")
+        .select("id, shop_id, product_name, category, unit, price, stock_status, updated_at, shop_name, area")
         .order("updated_at", { ascending: false });
       if (!error) setLivePrices((data ?? []) as PublicPrice[]);
       setPricesLoading(false);
@@ -478,7 +479,7 @@ export default function Home() {
                   <div className="comparison-shop-list">
                     {items.map((item, index) => (
                       <div className={index === 0 ? "comparison-shop best-price" : "comparison-shop"} key={item.id}>
-                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span><span className={priceFreshness(item.updated_at).stale ? "price-freshness stale" : "price-freshness"}>{priceFreshness(item.updated_at).label}</span></div>
+                        <div><strong>{item.shop_name}</strong><span>{item.area}{index === 0 ? " · Lowest price" : ""}</span><span className={"stock-status " + item.stock_status}>{item.stock_status === "out_of_stock" ? "Out of stock" : item.stock_status === "low_stock" ? "Low stock" : "In stock"}</span><span className={priceFreshness(item.updated_at).stale ? "price-freshness stale" : "price-freshness"}>{priceFreshness(item.updated_at).label}</span></div>
                         <strong className="comparison-price">₹{Number(item.price).toFixed(2)}</strong>
                       </div>
                     ))}
