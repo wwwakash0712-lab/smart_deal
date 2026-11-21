@@ -238,3 +238,6 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 .owner-manual-location h3{font:700 15px Manrope,sans-serif;margin:0 0 6px}
 .owner-manual-location>p{font-size:12px;line-height:1.5;color:var(--muted);margin:0 0 12px}
 .owner-manual-location>.primary-button{margin-top:12px}
+
+.price-freshness{font-size:10px!important;color:#39734c!important;font-weight:600}
+.price-freshness.stale{color:#a05b16!important;background:#fff3df;border-radius:5px;padding:4px 6px;display:inline-block}
