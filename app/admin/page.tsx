@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-type PriceReport = { id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; };\n\ntype Shop = {
+type PriceReport = { id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; };
+
+type Shop = {
   id: string;
   shop_name: string;
   owner_name: string;
@@ -19,13 +21,25 @@ type PriceReport = { id: string; shop_name: string; product_name: string; catego
 
 export default function AdminDashboardPage() {
   const router = useRouter();
-  const [shops, setShops] = useState<Shop[]>([]);\n  const [priceReports, setPriceReports] = useState<PriceReport[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [priceReports, setPriceReports] = useState<PriceReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const loadPriceReports = useCallback(async () => {\n    const { data, error } = await supabase.from("price_issue_reports").select("id, shop_name, product_name, category, unit, displayed_price, report_reason, status, created_at").order("created_at", { ascending: false });\n    if (!error) setPriceReports((data ?? []) as PriceReport[]);\n  }, []);\n\n  async function markReportReviewed(reportId: string) {\n    const { error } = await supabase.from("price_issue_reports").update({ status: "reviewed" }).eq("id", reportId);\n    if (error) setErrorMessage("Could not update report status.");\n    else { setMessage("Price report marked as reviewed."); await loadPriceReports(); }\n  }\n\n  const loadPendingShops = useCallback(async () => {
+  const loadPriceReports = useCallback(async () => {
+    const { data, error } = await supabase.from("price_issue_reports").select("id, shop_name, product_name, category, unit, displayed_price, report_reason, status, created_at").order("created_at", { ascending: false });
+    if (!error) setPriceReports((data ?? []) as PriceReport[]);
+  }, []);
+
+  async function markReportReviewed(reportId: string) {
+    const { error } = await supabase.from("price_issue_reports").update({ status: "reviewed" }).eq("id", reportId);
+    if (error) setErrorMessage("Could not update report status.");
+    else { setMessage("Price report marked as reviewed."); await loadPriceReports(); }
+  }
+
+  const loadPendingShops = useCallback(async () => {
     setErrorMessage("");
     const { data, error } = await supabase
       .from("shops")
