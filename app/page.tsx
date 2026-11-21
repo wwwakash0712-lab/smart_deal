@@ -40,6 +40,7 @@ export default function Home() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [shoppingList, setShoppingList] = useState<Record<string, { name: string; unit: string; quantity: number }>>({});
   const [shoppingListReady, setShoppingListReady] = useState(false);
+  const [reportNotice, setReportNotice] = useState("");
 
   useEffect(() => {
     try {
@@ -226,6 +227,18 @@ export default function Home() {
     setShoppingList((current) => ({ ...current, [key]: { name: item.product_name, unit: item.unit, quantity: current[key]?.quantity ?? 1 } }));
   }
 
+  async function reportPriceIssue(item: PublicPrice) {
+    const reason = window.prompt("What is wrong with this price? (e.g. price differs at shop)");
+    if (!reason || !reason.trim()) return;
+    setReportNotice("Submitting price report...");
+    const { error } = await supabase.from("price_issue_reports").insert({
+      shop_id: item.shop_id, shop_name: item.shop_name, product_name: item.product_name,
+      category: item.category, unit: item.unit, displayed_price: Number(item.price),
+      report_reason: reason.trim().slice(0, 500),
+    });
+    setReportNotice(error ? "Could not submit report. Please try again later." : "Thanks — your price report was sent to the Smart Deal admin.");
+  }
+
   function updateShoppingQuantity(key: string, quantity: number) {
     setShoppingList((current) => ({ ...current, [key]: { ...current[key], quantity: Math.max(1, Math.min(99, quantity)) } }));
   }
@@ -357,6 +370,7 @@ export default function Home() {
                     ))}
                   </div>
                   <p className="comparison-updated">Each shop shows its own price update status.</p>
+                  <div className="price-report-actions">{items.map((item) => <button key={item.id} type="button" onClick={() => reportPriceIssue(item)}>Report wrong price · {item.shop_name}</button>)}</div>
                 </article>
               );
             })}
@@ -364,6 +378,7 @@ export default function Home() {
         )}
       </section>
 
+      {reportNotice && <p className="price-report-notice" role="status">{reportNotice}</p>}
       <section className="content-section shopping-list-section" id="shopping-list">
         <div className="section-heading">
           <div><span className="eyebrow">PLAN YOUR PURCHASE</span><h2>My shopping list</h2></div>
