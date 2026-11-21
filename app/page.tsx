@@ -293,6 +293,7 @@ export default function Home() {
                   <p className="approved-shop-area">{shop.area}, Tiruchirappalli</p>
                   {customerPosition && <p className="approved-shop-distance">{shopDistanceLabel(shop) || "Shop GPS location not added yet"}</p>}
                   <p className="approved-shop-products"><strong>Products:</strong> {shop.products || "Details not provided"}</p>
+                  {shop.latitude != null && shop.longitude != null && <a className="shop-directions" href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}${customerPosition ? `&origin=${customerPosition.latitude},${customerPosition.longitude}` : ""}`} target="_blank" rel="noreferrer">Get directions ↗</a>}
                 </div>
               </article>
             ))}
