@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
-type PriceReport = { id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; };
+type PriceReport = { id: string; shop_id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; };
 
 type Shop = {
   id: string;
@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   const loadPriceReports = useCallback(async () => {
-    const { data, error } = await supabase.from("price_issue_reports").select("id, shop_name, product_name, category, unit, displayed_price, report_reason, status, created_at").order("created_at", { ascending: false });
+    const { data, error } = await supabase.from("price_issue_reports").select("id, shop_id, shop_name, product_name, category, unit, displayed_price, report_reason, status, created_at").order("created_at", { ascending: false });
     if (error) {
       setErrorMessage("Could not load customer price reports: " + error.message);
       return;
@@ -37,10 +37,23 @@ export default function AdminDashboardPage() {
     setPriceReports((data ?? []) as PriceReport[]);
   }, []);
 
-  async function markReportReviewed(reportId: string) {
-    const { error } = await supabase.from("price_issue_reports").update({ status: "reviewed" }).eq("id", reportId);
-    if (error) setErrorMessage("Could not update report status.");
-    else { setMessage("Price report marked as reviewed."); await loadPriceReports(); }
+  async function notifyShopOwner(report: PriceReport) {
+    setBusyId(report.id);
+    setErrorMessage("");
+    setMessage("");
+    const { error } = await supabase.from("shop_owner_notifications").insert({
+      shop_id: report.shop_id,
+      report_id: report.id,
+      message: "Please check the reported price for " + report.product_name + " (" + report.unit + "). Customer report: " + report.report_reason,
+    });
+    setBusyId("");
+    if (error) {
+      setErrorMessage("Could not notify shop owner: " + error.message);
+      return;
+    }
+    setMessage("Correction request sent to " + report.shop_name + ".");
+    await supabase.from("price_issue_reports").update({ status: "reviewed" }).eq("id", report.id);
+    await loadPriceReports();
   }
 
   const loadPendingShops = useCallback(async () => {
@@ -152,7 +165,7 @@ export default function AdminDashboardPage() {
                   <p><strong>Customer reason:</strong> {report.report_reason}</p>
                   <p><strong>Reported:</strong> {new Date(report.created_at).toLocaleString("en-IN")}</p>
                 </div>
-                {report.status === "pending" && <div className="admin-actions"><button className="admin-approve" disabled={busyId === report.id} onClick={() => markReportReviewed(report.id)}>{busyId === report.id ? "Please wait..." : "Mark reviewed"}</button></div>}
+                {report.status === "pending" && <div className="admin-actions"><button className="admin-approve" disabled={busyId === report.id} onClick={() => notifyShopOwner(report)}>{busyId === report.id ? "Sending..." : "Notify shop owner"}</button></div>}
               </article>
             ))}
           </div>
