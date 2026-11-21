@@ -113,7 +113,15 @@ export default function Home() {
   // Keep common launch areas selectable even before/while shop data finishes loading.
   const shopAreas = useMemo(() => {
     const available = approvedShops.map((shop) => shop.area.trim()).filter(Boolean);
-    const commonTrichyAreas = ["Chathiram", "Kattur"];
+    const commonTrichyAreas = [
+      "Ariyamangalam", "Airport", "Anna Nagar", "Bheema Nagar", "BHEL Township",
+      "Cantonment", "Chathiram", "Chatram Bus Stand", "Crawford", "Edamalaipatti Pudur",
+      "Golden Rock", "K.K. Nagar", "Kattur", "Karumandapam", "Khajamalai",
+      "Palakarai", "Panjappur", "Puthur", "Srirangam", "Thennur",
+      "Thillai Nagar", "Thiruverumbur", "Tiruvanaikoil", "TVS Tollgate",
+      "Vayalur Road", "Woraiyur", "Uyyakondan Thirumalai", "Ponmalai",
+      "Manachanallur", "Samayapuram", "Lalgudi Road", "Navalpattu"
+    ];
     return ["All areas", ...Array.from(new Set([...commonTrichyAreas, ...available])).sort((a, b) => a.localeCompare(b))];
   }, [approvedShops]);
 
