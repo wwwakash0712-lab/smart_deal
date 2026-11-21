@@ -110,13 +110,18 @@ export default function Home() {
     loadPublicPrices();
   }, []);
 
-  const shopAreas = useMemo(
-    () => ["All areas", ...Array.from(new Set(approvedShops.map((shop) => shop.area.trim()).filter(Boolean))).sort()],
-    [approvedShops]
-  );
+  // Keep common launch areas selectable even before/while shop data finishes loading.
+  const shopAreas = useMemo(() => {
+    const available = approvedShops.map((shop) => shop.area.trim()).filter(Boolean);
+    const commonTrichyAreas = ["Chathiram", "Kattur"];
+    return ["All areas", ...Array.from(new Set([...commonTrichyAreas, ...available])).sort((a, b) => a.localeCompare(b))];
+  }, [approvedShops]);
 
   const filteredApprovedShops = useMemo(() => {
-    const filtered = approvedShops.filter((shop) => selectedShopArea === "All areas" || shop.area.trim() === selectedShopArea);
+    const filtered = approvedShops.filter((shop) =>
+      selectedShopArea === "All areas" ||
+      shop.area.trim().toLocaleLowerCase() === selectedShopArea.trim().toLocaleLowerCase()
+    );
     if (!customerPosition) return filtered;
     const distance = (shop: ApprovedShop) => {
       if (shop.latitude == null || shop.longitude == null) return Number.POSITIVE_INFINITY;
