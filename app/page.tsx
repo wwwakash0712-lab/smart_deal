@@ -41,6 +41,9 @@ export default function Home() {
   const [shoppingList, setShoppingList] = useState<Record<string, { name: string; unit: string; quantity: number }>>({});
   const [shoppingListReady, setShoppingListReady] = useState(false);
   const [reportNotice, setReportNotice] = useState("");
+  const [reportTarget, setReportTarget] = useState<PublicPrice | null>(null);
+  const [reportReason, setReportReason] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
 
   useEffect(() => {
     try {
@@ -227,15 +230,24 @@ export default function Home() {
     setShoppingList((current) => ({ ...current, [key]: { name: item.product_name, unit: item.unit, quantity: current[key]?.quantity ?? 1 } }));
   }
 
-  async function reportPriceIssue(item: PublicPrice) {
-    const reason = window.prompt("What is wrong with this price? (e.g. price differs at shop)");
-    if (!reason || !reason.trim()) return;
-    setReportNotice("Submitting price report...");
+  function reportPriceIssue(item: PublicPrice) {
+    setReportTarget(item);
+    setReportReason("");
+    setReportNotice("");
+  }
+
+  async function submitPriceReport() {
+    if (!reportTarget || !reportReason.trim() || reportSubmitting) return;
+    setReportSubmitting(true);
     const { error } = await supabase.from("price_issue_reports").insert({
-      shop_id: item.shop_id, shop_name: item.shop_name, product_name: item.product_name,
-      category: item.category, unit: item.unit, displayed_price: Number(item.price),
-      report_reason: reason.trim().slice(0, 500),
+      shop_id: reportTarget.shop_id, shop_name: reportTarget.shop_name,
+      product_name: reportTarget.product_name, category: reportTarget.category,
+      unit: reportTarget.unit, displayed_price: Number(reportTarget.price),
+      report_reason: reportReason.trim().slice(0, 500),
     });
+    setReportSubmitting(false);
+    setReportTarget(null);
+    setReportReason("");
     setReportNotice(error ? "Could not submit report. Please try again later." : "Thanks — your price report was sent to the Smart Deal admin.");
   }
 
@@ -378,6 +390,16 @@ export default function Home() {
         )}
       </section>
 
+      {reportTarget && (
+        <section className="price-report-notice" aria-label="Report a price issue">
+          <h3>Report wrong price</h3>
+          <p>{reportTarget.product_name} · {reportTarget.shop_name} · ₹{Number(reportTarget.price).toFixed(2)}</p>
+          <label htmlFor="price-report-reason">What is wrong with this price?</label>
+          <textarea id="price-report-reason" value={reportReason} onChange={(event) => setReportReason(event.target.value)} maxLength={500} rows={3} placeholder="Explain the price issue..." />
+          <button type="button" disabled={!reportReason.trim() || reportSubmitting} onClick={submitPriceReport}>{reportSubmitting ? "Submitting..." : "Submit report"}</button>
+          <button type="button" onClick={() => setReportTarget(null)} disabled={reportSubmitting}>Cancel</button>
+        </section>
+      )}
       {reportNotice && <p className="price-report-notice" role="status">{reportNotice}</p>}
       <section className="content-section shopping-list-section" id="shopping-list">
         <div className="section-heading">
