@@ -14,6 +14,7 @@ type ApprovedShop = {
 };
 
 type PriceHistory = { id: string; shop_id: string; product_name: string; unit: string; price: number; recorded_at: string; shop_name: string; area: string };
+type ShopReview = { id: string; shop_id: string; customer_name: string; rating: number; review: string; created_at: string };
 
 type PublicPrice = {
   id: string;
@@ -49,6 +50,13 @@ export default function Home() {
   const [reportTarget, setReportTarget] = useState<PublicPrice | null>(null);
   const [reportReason, setReportReason] = useState("");
   const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [shopReviews, setShopReviews] = useState<ShopReview[]>([]);
+  const [reviewTarget, setReviewTarget] = useState("");
+  const [reviewName, setReviewName] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewNotice, setReviewNotice] = useState<Record<string, string>>({});
 
   useEffect(() => {
     try {
@@ -109,6 +117,15 @@ export default function Home() {
       if (!error) setPriceHistory((data ?? []) as PriceHistory[]);
     }
     loadPriceHistory();
+
+    async function loadShopReviews() {
+      const { data, error } = await supabase.from("shop_reviews")
+        .select("id, shop_id, customer_name, rating, review, created_at")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false });
+      if (!error) setShopReviews((data ?? []) as ShopReview[]);
+    }
+    loadShopReviews();
   }, []);
 
   // Keep common launch areas selectable even before/while shop data finishes loading.
@@ -292,6 +309,28 @@ export default function Home() {
     setReportNotice(error ? "Could not submit report. Please try again later." : "Thanks — your price report was sent to the Smart Deal admin.");
   }
 
+  async function submitShopReview(shopId: string) {
+    if (!reviewName.trim() || reviewName.trim().length < 2 || !reviewText.trim() || reviewText.trim().length < 5 || reviewSubmitting) return;
+    setReviewSubmitting(true);
+    const { error } = await supabase.from("shop_reviews").insert({
+      shop_id: shopId,
+      customer_name: reviewName.trim().slice(0, 60),
+      rating: reviewRating,
+      review: reviewText.trim().slice(0, 500),
+      status: "pending",
+    });
+    setReviewSubmitting(false);
+    if (error) {
+      setReviewNotice((current) => ({ ...current, [shopId]: "Could not submit review. Please try again." }));
+      return;
+    }
+    setReviewName("");
+    setReviewRating(5);
+    setReviewText("");
+    setReviewTarget("");
+    setReviewNotice((current) => ({ ...current, [shopId]: "Thanks! Your review was submitted for admin approval." }));
+  }
+
   function updateShoppingQuantity(key: string, quantity: number) {
     setShoppingList((current) => ({ ...current, [key]: { ...current[key], quantity: Math.max(1, Math.min(99, quantity)) } }));
   }
@@ -360,6 +399,27 @@ export default function Home() {
                   <p className="approved-shop-area">{shop.area}, Tiruchirappalli</p>
                   {customerPosition && <p className="approved-shop-distance">{shopDistanceLabel(shop) || "Shop GPS location not added yet"}</p>}
                   <p className="approved-shop-products"><strong>Products:</strong> {shop.products || "Details not provided"}</p>
+                  <div className="shop-rating-summary">
+                    <strong>{shopReviews.filter((review) => review.shop_id === shop.id).length ? "★ " + (shopReviews.filter((review) => review.shop_id === shop.id).reduce((sum, review) => sum + Number(review.rating), 0) / shopReviews.filter((review) => review.shop_id === shop.id).length).toFixed(1) : "No ratings yet"}</strong>
+                    <span>({shopReviews.filter((review) => review.shop_id === shop.id).length} reviews)</span>
+                    <button type="button" onClick={() => { setReviewTarget(reviewTarget === shop.id ? "" : shop.id); setReviewNotice((current) => ({ ...current, [shop.id]: "" })); }}>Write a review</button>
+                  </div>
+                  {shopReviews.filter((review) => review.shop_id === shop.id).slice(0, 2).map((review) => (
+                    <div className="shop-public-review" key={review.id}>
+                      <div><strong>{review.customer_name}</strong><span>{"★".repeat(Number(review.rating))}</span></div>
+                      <p>{review.review}</p>
+                      <small>{new Date(review.created_at).toLocaleDateString("en-IN")}</small>
+                    </div>
+                  ))}
+                  {reviewTarget === shop.id && (
+                    <div className="shop-review-form">
+                      <label>Your name<input value={reviewName} onChange={(event) => setReviewName(event.target.value)} maxLength={60} placeholder="Enter your name" /></label>
+                      <label>Rating<select value={reviewRating} onChange={(event) => setReviewRating(Number(event.target.value))}>{[5,4,3,2,1].map((value) => <option key={value} value={value}>{value} star{value === 1 ? "" : "s"}</option>)}</select></label>
+                      <label>Your review<textarea value={reviewText} onChange={(event) => setReviewText(event.target.value)} maxLength={500} rows={3} placeholder="Share your experience (at least 5 characters)" /></label>
+                      <button type="button" disabled={reviewSubmitting || reviewName.trim().length < 2 || reviewText.trim().length < 5} onClick={() => submitShopReview(shop.id)}>{reviewSubmitting ? "Submitting..." : "Submit review"}</button>
+                    </div>
+                  )}
+                  {reviewNotice[shop.id] && <p className="shop-review-notice">{reviewNotice[shop.id]}</p>}
                   {shop.latitude != null && shop.longitude != null && <a className="shop-directions" href={`https://www.google.com/maps/dir/?api=1&destination=${shop.latitude},${shop.longitude}${customerPosition ? `&origin=${customerPosition.latitude},${customerPosition.longitude}` : ""}`} target="_blank" rel="noreferrer">Get directions ↗</a>}
                 </div>
               </article>
