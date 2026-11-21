@@ -127,12 +127,17 @@ export default function Home() {
   }, [approvedShops]);
 
   const filteredApprovedShops = useMemo(() => {
-    const term = shopSearch.trim().toLocaleLowerCase();
+    const normalize = (value: string) => value.normalize("NFKD").toLocaleLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const term = normalize(shopSearch);
     const filtered = approvedShops.filter((shop) => {
       const matchesArea = selectedShopArea === "All areas" ||
-        shop.area.trim().toLocaleLowerCase() === selectedShopArea.trim().toLocaleLowerCase();
-      const matchesSearch = !term || shop.shop_name.toLocaleLowerCase().includes(term) ||
-        shop.area.toLocaleLowerCase().includes(term) || (shop.products ?? "").toLocaleLowerCase().includes(term);
+        normalize(shop.area) === normalize(selectedShopArea);
+      const shopPrices = livePrices.filter((price) => price.shop_id === shop.id);
+      const searchableText = normalize([
+        shop.shop_name, shop.area, shop.products ?? "",
+        ...shopPrices.flatMap((price) => [price.product_name, price.category])
+      ].join(" "));
+      const matchesSearch = !term || searchableText.includes(term);
       return matchesArea && matchesSearch;
     });
     if (!customerPosition) return filtered;
@@ -145,7 +150,7 @@ export default function Home() {
       return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     };
     return [...filtered].sort((a, b) => distance(a) - distance(b));
-  }, [approvedShops, selectedShopArea, shopSearch, customerPosition]);
+  }, [approvedShops, livePrices, selectedShopArea, shopSearch, customerPosition]);
 
   function findNearbyShops() {
     if (!("geolocation" in navigator)) {
