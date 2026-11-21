@@ -13,6 +13,8 @@ type ApprovedShop = {
   longitude: number | null;
 };
 
+type PriceHistory = { id: string; shop_id: string; product_name: string; unit: string; price: number; recorded_at: string; shop_name: string; area: string };
+
 type PublicPrice = {
   id: string;
   shop_id: string;
@@ -31,6 +33,8 @@ export default function Home() {
   const [shopsError, setShopsError] = useState("");
   const [livePrices, setLivePrices] = useState<PublicPrice[]>([]);
   const [pricesLoading, setPricesLoading] = useState(true);
+  const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
+  const [expandedHistoryKey, setExpandedHistoryKey] = useState("");
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
   const [compareCategory, setCompareCategory] = useState("All categories");
@@ -95,6 +99,15 @@ export default function Home() {
       setPricesLoading(false);
     }
     loadPublicPrices();
+
+    async function loadPriceHistory() {
+      const { data, error } = await supabase
+        .from("public_price_history")
+        .select("id, shop_id, product_name, unit, price, recorded_at, shop_name, area")
+        .order("recorded_at", { ascending: true });
+      if (!error) setPriceHistory((data ?? []) as PriceHistory[]);
+    }
+    loadPriceHistory();
   }, []);
 
   // Keep common launch areas selectable even before/while shop data finishes loading.
@@ -382,6 +395,27 @@ export default function Home() {
                     ))}
                   </div>
                   <p className="comparison-updated">Each shop shows its own price update status.</p>
+                  {(() => {
+                    const historyKey = items[0].product_name.trim().toLowerCase() + "__" + items[0].unit.trim().toLowerCase();
+                    const historyItems = priceHistory.filter((entry) => entry.product_name.trim().toLowerCase() + "__" + entry.unit.trim().toLowerCase() === historyKey);
+                    return (
+                      <div className="price-history-panel">
+                        <button type="button" className="price-history-toggle" onClick={() => setExpandedHistoryKey(expandedHistoryKey === historyKey ? "" : historyKey)}>
+                          {expandedHistoryKey === historyKey ? "Hide price history" : "View price history"} ({historyItems.length} updates)
+                        </button>
+                        {expandedHistoryKey === historyKey && (
+                          <div className="price-history-list">
+                            {historyItems.length === 0 ? <p>No price history recorded yet. New price changes will appear here.</p> : historyItems.map((entry) => (
+                              <div className="price-history-row" key={entry.id}>
+                                <span><strong>{entry.shop_name}</strong><small>{new Date(entry.recorded_at).toLocaleDateString("en-IN")}</small></span>
+                                <strong>₹{Number(entry.price).toFixed(2)}</strong>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="price-report-actions">{items.map((item) => <button key={item.id} type="button" onClick={() => reportPriceIssue(item)}>Report wrong price · {item.shop_name}</button>)}</div>
                 </article>
               );
