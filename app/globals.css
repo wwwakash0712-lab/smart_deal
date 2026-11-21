@@ -278,3 +278,21 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 
 /* Shop finder search */
 .shop-search-input{min-width:230px;flex:1;height:42px;padding:0 12px;border:1px solid #dfe6df;border-radius:8px;background:#fff;color:var(--ink);font:500 13px "DM Sans",sans-serif;outline:none}.shop-search-input:focus{border-color:var(--green);box-shadow:0 0 0 3px #176b4a12}
+
+
+/* Customer shop ratings and moderated reviews */
+.shop-rating-summary{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:10px 0 7px;font-size:11px}
+.shop-rating-summary>strong{color:#a36a16}
+.shop-rating-summary>span{color:var(--muted)}
+.shop-rating-summary button{border:1px solid #cfe4d2;background:#f0f7f0;color:var(--green);border-radius:7px;padding:6px 9px;font-size:10px;font-weight:700;cursor:pointer}
+.shop-public-review{border-top:1px solid var(--line);padding:8px 0}
+.shop-public-review>div{display:flex;justify-content:space-between;gap:8px;font-size:11px}
+.shop-public-review>div span{color:#b47b1d;letter-spacing:1px}
+.shop-public-review p{font-size:11px;line-height:1.5;color:var(--ink);margin:5px 0}
+.shop-public-review small{font-size:9px;color:var(--muted)}
+.shop-review-form{display:grid;gap:10px;padding:12px;margin-top:8px;background:#f8faf7;border:1px solid var(--line);border-radius:9px}
+.shop-review-form label{display:grid;gap:5px;font-size:11px;font-weight:700;color:#435149}
+.shop-review-form input,.shop-review-form select,.shop-review-form textarea{width:100%;border:1px solid #dfe6df;border-radius:7px;background:#fff;padding:9px;font:400 12px 'DM Sans',sans-serif;color:var(--ink)}
+.shop-review-form button{border:0;border-radius:7px;padding:10px;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer}
+.shop-review-form button:disabled{opacity:.5;cursor:not-allowed}
+.shop-review-notice{font-size:10px;line-height:1.5;color:var(--green);margin:7px 0}
