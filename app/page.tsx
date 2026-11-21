@@ -33,6 +33,7 @@ export default function Home() {
   const [pricesLoading, setPricesLoading] = useState(true);
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
+  const [compareCategory, setCompareCategory] = useState("All categories");
   const [selectedShopArea, setSelectedShopArea] = useState("All areas");
   const [customerPosition, setCustomerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState("");
@@ -165,17 +166,23 @@ export default function Home() {
     [livePrices]
   );
 
+  const comparisonCategories = useMemo(
+    () => ["All categories", ...Array.from(new Set(livePrices.map((item) => item.category.trim()).filter(Boolean))).sort()],
+    [livePrices]
+  );
+
   const comparisonGroups = useMemo(() => {
     const term = compareSearch.trim().toLowerCase();
     const matchingPrices = livePrices.filter((item) => {
       const matchesArea = compareArea === "All areas" || item.area === compareArea;
+      const matchesCategory = compareCategory === "All categories" || item.category === compareCategory;
       const matchesSearch =
         !term ||
         item.product_name.toLowerCase().includes(term) ||
         item.category.toLowerCase().includes(term) ||
         item.shop_name.toLowerCase().includes(term) ||
         item.area.toLowerCase().includes(term);
-      return matchesArea && matchesSearch;
+      return matchesArea && matchesCategory && matchesSearch;
     });
 
     const groups = new Map<string, PublicPrice[]>();
@@ -189,7 +196,7 @@ export default function Home() {
     return Array.from(groups.values()).map((items) =>
       items.sort((a, b) => Number(a.price) - Number(b.price))
     ).sort((a, b) => a[0].product_name.localeCompare(b[0].product_name));
-  }, [livePrices, compareSearch, compareArea]);
+  }, [livePrices, compareSearch, compareArea, compareCategory]);
 
   const shoppingItems = Object.entries(shoppingList);
   const basketComparisons = useMemo(() => {
@@ -305,6 +312,12 @@ export default function Home() {
             <span>Choose area</span>
             <select value={compareArea} onChange={(event) => setCompareArea(event.target.value)}>
               {comparisonAreas.map((area) => <option key={area} value={area}>{area}</option>)}
+            </select>
+          </label>
+          <label className="comparison-area-label">
+            <span>Product category</span>
+            <select value={compareCategory} onChange={(event) => setCompareCategory(event.target.value)}>
+              {comparisonCategories.map((category) => <option key={category} value={category}>{category}</option>)}
             </select>
           </label>
         </div>
