@@ -241,3 +241,6 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
 
 .price-freshness{font-size:10px!important;color:#39734c!important;font-weight:600}
 .price-freshness.stale{color:#a05b16!important;background:#fff3df;border-radius:5px;padding:4px 6px;display:inline-block}
+
+.shop-directions{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 12px;border-radius:9px;background:#e8f2e9;color:#245b36;font-size:12px;font-weight:700;text-decoration:none;transition:background .2s}
+.shop-directions:hover{background:#d5e8d8}
