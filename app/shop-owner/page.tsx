@@ -6,12 +6,14 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type Product = { id: string; product_name: string; category: string; unit: string; price: number; updated_at: string };
+type OwnerNotification = { id: string; message: string; is_read: boolean; created_at: string };
 type Shop = { id: string; shop_name: string; area: string };
 
 export default function ShopOwnerDashboard() {
   const router = useRouter();
   const [shop, setShop] = useState<Shop | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
+  const [notifications, setNotifications] = useState<OwnerNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -53,10 +55,29 @@ export default function ShopOwnerDashboard() {
       .eq("shop_id", assignment.shop_id).order("updated_at", { ascending: false });
     if (productError) setError("Could not load your prices. Please check the database setup.");
     else setProducts((productData ?? []) as Product[]);
+
+    const { data: notificationData, error: notificationError } = await supabase
+      .from("shop_owner_notifications")
+      .select("id, message, is_read, created_at")
+      .eq("shop_id", assignment.shop_id)
+      .order("created_at", { ascending: false });
+    if (!notificationError) setNotifications((notificationData ?? []) as OwnerNotification[]);
     setLoading(false);
   }, [router]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  async function markNotificationRead(notificationId: string) {
+    const { error: readError } = await supabase
+      .from("shop_owner_notifications")
+      .update({ is_read: true })
+      .eq("id", notificationId);
+    if (readError) {
+      setError("Could not mark notification as read.");
+      return;
+    }
+    setNotifications((current) => current.map((item) => item.id === notificationId ? { ...item, is_read: true } : item));
+  }
 
   function saveShopLocation() {
     if (!shop) return;
@@ -167,6 +188,18 @@ export default function ShopOwnerDashboard() {
         {error && <p className="admin-error" role="alert">{error}</p>}
         {notice && <p className="admin-success" role="status">{notice}</p>}
         {shop && <>
+          <div className="owner-panel">
+            <h2>Price correction requests</h2>
+            {notifications.length === 0 ? (
+              <p>No correction requests from Smart Deal admin.</p>
+            ) : notifications.map((item) => (
+              <article className="admin-shop-card" key={item.id}>
+                <div className="admin-shop-top"><strong>{item.is_read ? "Read" : "New request"}</strong><span>{new Date(item.created_at).toLocaleString("en-IN")}</span></div>
+                <p>{item.message}</p>
+                {!item.is_read && <button className="primary-button" type="button" onClick={() => markNotificationRead(item.id)}>Mark as read</button>}
+              </article>
+            ))}
+          </div>
           <div className="owner-panel owner-location-panel">
             <h2>Shop location</h2>
             <p>Stand inside or near your shop, then allow GPS permission to save its location for nearby customers.</p>
