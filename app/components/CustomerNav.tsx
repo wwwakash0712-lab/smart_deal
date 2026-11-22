@@ -21,7 +21,6 @@ export default function CustomerNav() {
           <Link key={link.href} href={link.href} className={pathname === link.href || (link.href === "/account" && pathname.startsWith("/account")) ? "active" : ""}>{link.label}</Link>
         ))}
       </nav>
-      <Link className="outline-button" href="/shop-register">List your shop</Link>
     </header>
   );
 }
