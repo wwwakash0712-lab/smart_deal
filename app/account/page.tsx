@@ -6,11 +6,18 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CustomerNav from "../components/CustomerNav";
 
-type AccountUser = { email?: string };
+type AccountUser = {
+  id: string;
+  email?: string;
+  user_metadata?: { full_name?: string; phone?: string; area?: string };
+};
 
 export default function CustomerAccountPage() {
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [user, setUser] = useState<AccountUser | null>(null);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [area, setArea] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,10 +27,24 @@ export default function CustomerAccountPage() {
   useEffect(() => {
     let mounted = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (mounted) setUser(data.session?.user ?? null);
+      if (mounted) {
+        const current = data.session?.user as AccountUser | undefined;
+        setUser(current ?? null);
+        if (current) {
+          setFullName(current.user_metadata?.full_name ?? "");
+          setPhone(current.user_metadata?.phone ?? "");
+          setArea(current.user_metadata?.area ?? "");
+        }
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const current = session?.user as AccountUser | undefined;
+      setUser(current ?? null);
+      if (current) {
+        setFullName(current.user_metadata?.full_name ?? "");
+        setPhone(current.user_metadata?.phone ?? "");
+        setArea(current.user_metadata?.area ?? "");
+      }
     });
     return () => {
       mounted = false;
@@ -42,11 +63,13 @@ export default function CustomerAccountPage() {
       const { data, error: authError } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
+        options: { data: { full_name: fullName.trim(), phone: phone.trim(), area: area.trim() } },
       });
       if (authError) {
         setError(authError.message);
       } else if (data.session) {
-        setNotice("Your Smart Deal account is ready. You are signed in.");
+        setUser(data.session.user as AccountUser);
+        setNotice("Your Smart Deal account is ready. Your profile details are saved.");
         setPassword("");
       } else {
         setNotice("Signup successful. Check your email for the confirmation link, then log in.");
@@ -54,10 +77,7 @@ export default function CustomerAccountPage() {
         setPassword("");
       }
     } else {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
-      });
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: cleanEmail, password });
       if (authError) setError("Login failed. Check your email and password.");
       else {
         setNotice("Login successful. Welcome back!");
@@ -65,6 +85,22 @@ export default function CustomerAccountPage() {
       }
     }
     setBusy(false);
+  }
+
+  async function saveProfile(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setNotice("");
+    const { data, error: updateError } = await supabase.auth.updateUser({
+      data: { full_name: fullName.trim(), phone: phone.trim(), area: area.trim() },
+    });
+    setBusy(false);
+    if (updateError) setError("Could not update your profile. Please try again.");
+    else {
+      setUser(data.user as AccountUser);
+      setNotice("Your profile has been updated successfully.");
+    }
   }
 
   async function handleLogout() {
@@ -81,22 +117,37 @@ export default function CustomerAccountPage() {
       <section className="page-shell account-shell">
         <div className="page-heading">
           <span className="eyebrow">YOUR SMART DEAL ACCOUNT</span>
-          <h1>{user ? "Your account" : mode === "signup" ? "Create your account" : "Welcome back"}</h1>
-          <p>Sign in to Smart Deal to keep your shopping experience connected.</p>
+          <h1>{user ? "Your profile" : mode === "signup" ? "Create your account" : "Welcome back"}</h1>
+          <p>{user ? "Manage your details and keep your shopping experience connected." : "Create an account to save your shopping list and find better local deals."}</p>
         </div>
 
         <div className="account-card">
           {user ? (
-            <div className="account-signed-in">
-              <div className="account-avatar">✓</div>
-              <h2>You are signed in</h2>
-              <p className="account-email">{user.email}</p>
-              <p>Your customer account is active.</p>
+            <>
+              <div className="account-signed-in">
+                <div className="account-avatar">{(fullName.trim()[0] || user.email?.[0] || "✓").toUpperCase()}</div>
+                <h2>Customer profile</h2>
+                <p className="account-email">{user.email}</p>
+              </div>
+              <form className="account-form" onSubmit={saveProfile}>
+                <label>Full name
+                  <input name="full_name" autoComplete="name" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Enter your full name" required />
+                </label>
+                <label>Mobile number
+                  <input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9+() -]{8,18}" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter mobile number" />
+                </label>
+                <label>Your area
+                  <input name="area" autoComplete="address-level2" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. Srirangam, Thillai Nagar" />
+                </label>
+                {notice && <p className="admin-success" role="status">{notice}</p>}
+                {error && <p className="admin-error" role="alert">{error}</p>}
+                <button className="primary-button" type="submit" disabled={busy}>{busy ? "Saving..." : "Save profile"}</button>
+              </form>
               <div className="account-actions">
                 <Link className="primary-button" href="/shopping-list">Open my shopping list</Link>
-                <button className="outline-button" type="button" onClick={handleLogout} disabled={busy}>{busy ? "Logging out..." : "Log out"}</button>
+                <button className="outline-button" type="button" onClick={handleLogout} disabled={busy}>{busy ? "Please wait..." : "Log out"}</button>
               </div>
-            </div>
+            </>
           ) : (
             <>
               <div className="account-tabs">
@@ -104,13 +155,24 @@ export default function CustomerAccountPage() {
                 <button type="button" className={mode === "login" ? "active" : ""} onClick={() => { setMode("login"); setError(""); setNotice(""); }}>Log in</button>
               </div>
               <form className="account-form" onSubmit={handleSubmit}>
+                {mode === "signup" && <>
+                  <label>Full name
+                    <input name="full_name" autoComplete="name" value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Enter your full name" required />
+                  </label>
+                  <label>Mobile number
+                    <input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9+() -]{8,18}" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter mobile number" />
+                  </label>
+                  <label>Your area
+                    <input name="area" autoComplete="address-level2" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. Srirangam, Thillai Nagar" />
+                  </label>
+                </>}
                 <label>Email address
                   <input type="email" name="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} required />
                 </label>
                 <label>Password
                   <input type="password" name="password" autoComplete={mode === "signup" ? "new-password" : "current-password"} minLength={6} value={password} onChange={e => setPassword(e.target.value)} required />
                 </label>
-                {mode === "signup" && <p className="account-hint">Use at least 6 characters. If email confirmation is enabled, check your inbox after signup.</p>}
+                {mode === "signup" && <p className="account-hint">Your name, mobile number and area will be saved in your Smart Deal profile. Use at least 6 characters for your password.</p>}
                 {error && <p className="admin-error" role="alert">{error}</p>}
                 {notice && <p className="admin-success" role="status">{notice}</p>}
                 <button className="primary-button" type="submit" disabled={busy}>{busy ? "Please wait..." : mode === "signup" ? "Create account" : "Log in"}</button>
@@ -118,8 +180,6 @@ export default function CustomerAccountPage() {
               <p className="account-switch">{mode === "signup" ? "Already have an account?" : "New to Smart Deal?"} <button type="button" onClick={() => { setMode(mode === "signup" ? "login" : "signup"); setError(""); setNotice(""); }}>{mode === "signup" ? "Log in" : "Create account"}</button></p>
             </>
           )}
-          {notice && user && <p className="admin-success" role="status">{notice}</p>}
-          {error && user && <p className="admin-error" role="alert">{error}</p>}
         </div>
       </section>
       <footer><Link className="brand footer-brand" href="/"><span className="brand-mark">S</span> Smart Deal</Link><span>Made for smarter shopping in Trichy.</span><span>© 2026 Smart Deal</span></footer>
