@@ -6,6 +6,13 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import CustomerNav from "../components/CustomerNav";
 
+const TRICHY_AREAS = [
+  "Allithurai", "Ariyamangalam", "Airport", "Anna Nagar", "Cantonment", "Chatram Bus Stand",
+  "Crawford", "Edamalaipatti Pudur", "KK Nagar", "Kattur", "Kumaran Nagar", "Palakarai",
+  "Puthur", "Srirangam", "Subramaniapuram", "Samayapuram", "Tennur", "Thillai Nagar",
+  "Thiruvanaikoil", "Thiruverumbur", "TVS Tollgate", "Woraiyur",
+];
+
 type AccountUser = {
   id: string;
   email?: string;
@@ -137,7 +144,12 @@ export default function CustomerAccountPage() {
                   <input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9+() -]{8,18}" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter mobile number" />
                 </label>
                 <label>Your area
-                  <input name="area" autoComplete="address-level2" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. Srirangam, Thillai Nagar" />
+                  <select name="area" value={TRICHY_AREAS.includes(area) ? area : area ? "Other" : ""} onChange={e => setArea(e.target.value === "Other" ? "" : e.target.value)}>
+                    <option value="">Select your area</option>
+                    {TRICHY_AREAS.map(item => <option key={item} value={item}>{item}</option>)}
+                    <option value="Other">Other area</option>
+                  </select>
+                  {!TRICHY_AREAS.includes(area) && <input name="custom_area" autoComplete="address-level2" value={area} onChange={e => setArea(e.target.value)} placeholder="Type your area / locality" />}
                 </label>
                 {notice && <p className="admin-success" role="status">{notice}</p>}
                 {error && <p className="admin-error" role="alert">{error}</p>}
@@ -163,7 +175,12 @@ export default function CustomerAccountPage() {
                     <input name="phone" type="tel" autoComplete="tel" inputMode="tel" pattern="[0-9+() -]{8,18}" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Enter mobile number" />
                   </label>
                   <label>Your area
-                    <input name="area" autoComplete="address-level2" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. Srirangam, Thillai Nagar" />
+                    <select name="area" value={TRICHY_AREAS.includes(area) ? area : area ? "Other" : ""} onChange={e => setArea(e.target.value === "Other" ? "" : e.target.value)}>
+                    <option value="">Select your area</option>
+                    {TRICHY_AREAS.map(item => <option key={item} value={item}>{item}</option>)}
+                    <option value="Other">Other area</option>
+                  </select>
+                  {!TRICHY_AREAS.includes(area) && <input name="custom_area" autoComplete="address-level2" value={area} onChange={e => setArea(e.target.value)} placeholder="Type your area / locality" />}
                   </label>
                 </>}
                 <label>Email address
