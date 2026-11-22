@@ -399,3 +399,70 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
   .page-shell{padding-left:12px;padding-right:12px}
   .comparison-card{padding:12px}
 }
+
+
+/* Premium customer account experience */
+.account-shell{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(360px,470px);
+  align-items:center;
+  gap:clamp(38px,7vw,100px);
+  max-width:1120px;
+  min-height:calc(100vh - 190px);
+  padding-top:42px;
+  padding-bottom:58px;
+  position:relative;
+}
+.account-shell:before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  width:390px;height:390px;
+  left:-150px;top:16%;
+  border-radius:50%;
+  background:radial-gradient(circle,#eaf4ed 0%,#f5f8f2 58%,transparent 72%);
+  pointer-events:none;
+}
+.account-shell>.page-heading,.account-shell>.account-card{position:relative;z-index:1}
+.account-shell>.page-heading{max-width:490px;margin:0}
+.account-shell>.page-heading .eyebrow{display:inline-flex;align-items:center;gap:9px;padding:9px 13px;border:1px solid #dce9dd;border-radius:30px;background:#f4f8f2;letter-spacing:1.35px}
+.account-shell>.page-heading h1{font:800 clamp(38px,5vw,58px)/1.07 Manrope,sans-serif;letter-spacing:-2.7px;margin:23px 0 16px;max-width:480px}
+.account-shell>.page-heading p{max-width:390px;font-size:15px;line-height:1.8;color:#68756e}
+.account-shell>.page-heading p:after{content:"✓  Compare prices   ✓  Save your list   ✓  Find local shops";display:block;max-width:360px;margin-top:34px;padding:17px 18px;border:1px solid #e3ebe2;border-radius:12px;background:#ffffffb8;color:#3d654b;font-size:12px;line-height:1.9;font-weight:700;box-shadow:0 10px 30px #17251f08}
+.account-card{width:100%;background:#fff;border:1px solid #e4ebe3;border-radius:22px;padding:30px;box-shadow:0 24px 70px #17251f12,0 3px 10px #17251f05}
+.account-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:5px;background:#f3f6f1;border:1px solid #e9eee7;border-radius:11px;margin-bottom:26px}
+.account-tabs button{min-height:43px;border:0;border-radius:8px;background:transparent;color:#68756e;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s}
+.account-tabs button.active{background:#fff;color:var(--green);box-shadow:0 2px 8px #17251f12}
+.account-form{display:grid;gap:17px}
+.account-form label{display:grid;gap:8px;color:#34463b;font-size:12px;font-weight:800}
+.account-form input{width:100%;height:50px;border:1px solid #dfe7df;border-radius:10px;padding:0 14px;background:#fcfdfb;color:var(--ink);font:500 14px 'DM Sans',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+.account-form input:focus{border-color:var(--green);background:#fff;box-shadow:0 0 0 4px #176b4a12}
+.account-form .primary-button{width:100%;min-height:50px;margin-top:3px;border:0;border-radius:10px;cursor:pointer;font-size:13px;box-shadow:0 7px 16px #176b4a20}
+.account-form .primary-button:disabled{opacity:.65;cursor:wait}
+.account-hint{margin:-5px 0 0;color:#849087;font-size:11px;line-height:1.6}
+.account-switch{margin:21px 0 0;text-align:center;color:#748078;font-size:12px}
+.account-switch button{border:0;background:none;color:var(--green);font-size:12px;font-weight:800;cursor:pointer;padding:4px}
+.account-signed-in{text-align:center;padding:12px 2px 4px}
+.account-avatar{width:66px;height:66px;margin:0 auto 18px;border-radius:21px;display:grid;place-items:center;background:linear-gradient(145deg,#e7f4e9,#d6ead9);color:var(--green);font-size:28px;font-weight:800;box-shadow:inset 0 0 0 1px #cce3d0}
+.account-signed-in h2{font:800 25px Manrope,sans-serif;letter-spacing:-.8px;margin:0 0 9px}
+.account-signed-in>p{font-size:13px;line-height:1.6;color:var(--muted)}
+.account-signed-in .account-email{color:var(--green);font-weight:800}
+.account-actions{display:grid;gap:10px;margin-top:24px}
+.account-actions .primary-button,.account-actions .outline-button{width:100%;min-height:48px;border-radius:10px;cursor:pointer}
+.account-actions .outline-button{background:#fff}
+.account-card .admin-error,.account-card .admin-success{margin:0;font-size:12px;line-height:1.55}
+.account-shell+footer{margin-top:0}
+@media(max-width:760px){
+  .account-shell{grid-template-columns:1fr;gap:25px;min-height:0;margin:24px auto 52px;padding:0 17px}
+  .account-shell:before{width:250px;height:250px;left:-130px;top:-30px}
+  .account-shell>.page-heading{max-width:none}
+  .account-shell>.page-heading h1{font-size:39px;letter-spacing:-1.8px;margin:16px 0 10px}
+  .account-shell>.page-heading p{font-size:13px;line-height:1.65}
+  .account-shell>.page-heading p:after{margin-top:15px;padding:11px 13px;font-size:10px}
+  .account-card{padding:22px 18px;border-radius:17px}
+}
+@media(max-width:380px){
+  .account-shell{padding-left:12px;padding-right:12px}
+  .account-shell>.page-heading h1{font-size:34px}
+  .account-card{padding:19px 15px}
+}
