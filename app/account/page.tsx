@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import CustomerNav from "../components/CustomerNav";
 
@@ -20,6 +21,7 @@ type AccountUser = {
 };
 
 export default function CustomerAccountPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("signup");
   const [user, setUser] = useState<AccountUser | null>(null);
   const [fullName, setFullName] = useState("");
@@ -106,7 +108,7 @@ export default function CustomerAccountPage() {
     if (updateError) setError("Could not update your profile. Please try again.");
     else {
       setUser(data.user as AccountUser);
-      setNotice("Your profile has been updated successfully.");
+      router.push("/shopping-list");
     }
   }
 
