@@ -40,6 +40,7 @@ export default function Home() {
   const [compareSearch, setCompareSearch] = useState("");
   const [compareArea, setCompareArea] = useState("All areas");
   const [compareCategory, setCompareCategory] = useState("All categories");
+  const [selectedShopId, setSelectedShopId] = useState("");
   const [selectedShopArea, setSelectedShopArea] = useState("All areas");
   const [shopSearch, setShopSearch] = useState("");
   const [customerPosition, setCustomerPosition] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -216,9 +217,20 @@ export default function Home() {
     [livePrices]
   );
 
+  const selectedShop = approvedShops.find((shop) => shop.id === selectedShopId);
+
+  function selectShop(shopId: string) {
+    setSelectedShopId(shopId);
+    setCompareSearch("");
+    setCompareArea("All areas");
+    setCompareCategory("All categories");
+    window.setTimeout(() => document.getElementById("live-prices")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
+
   const comparisonGroups = useMemo(() => {
     const term = compareSearch.trim().toLowerCase();
     const matchingPrices = livePrices.filter((item) => {
+      const matchesShop = !selectedShopId || item.shop_id === selectedShopId;
       const matchesArea = compareArea === "All areas" || item.area === compareArea;
       const matchesCategory = compareCategory === "All categories" || item.category === compareCategory;
       const matchesSearch =
@@ -227,7 +239,7 @@ export default function Home() {
         item.category.toLowerCase().includes(term) ||
         item.shop_name.toLowerCase().includes(term) ||
         item.area.toLowerCase().includes(term);
-      return matchesArea && matchesCategory && matchesSearch;
+      return matchesShop && matchesArea && matchesCategory && matchesSearch;
     });
 
     const groups = new Map<string, PublicPrice[]>();
@@ -241,7 +253,7 @@ export default function Home() {
     return Array.from(groups.values()).map((items) =>
       items.sort((a, b) => Number(a.price) - Number(b.price))
     ).sort((a, b) => a[0].product_name.localeCompare(b[0].product_name));
-  }, [livePrices, compareSearch, compareArea, compareCategory]);
+  }, [livePrices, compareSearch, compareArea, compareCategory, selectedShopId]);
 
   const shoppingItems = Object.entries(shoppingList);
   const basketComparisons = useMemo(() => {
@@ -392,7 +404,17 @@ export default function Home() {
         ) : (
           <div className="approved-shop-grid">
             {filteredApprovedShops.map((shop) => (
-              <article className="approved-shop-card" key={shop.id}>
+              <article
+                className="approved-shop-card"
+                key={shop.id}
+                role="group"
+                aria-label={`${shop.shop_name} shop card`}
+                style={{ cursor: "pointer" }}
+                onClick={(event) => {
+                  if ((event.target as HTMLElement).closest("button, a, input, select, textarea, label")) return;
+                  selectShop(shop.id);
+                }}
+              >
                 <div className="approved-shop-icon">🏪</div>
                 <div className="approved-shop-copy">
                   <span className="approved-label">APPROVED SHOP</span>
@@ -400,6 +422,7 @@ export default function Home() {
                   <p className="approved-shop-area">{shop.area}, Tiruchirappalli</p>
                   {customerPosition && <p className="approved-shop-distance">{shopDistanceLabel(shop) || "Shop GPS location not added yet"}</p>}
                   <p className="approved-shop-products"><strong>Products:</strong> {shop.products || "Details not provided"}</p>
+                  <button type="button" className="shop-directions" onClick={() => selectShop(shop.id)}>View this shop’s prices →</button>
                   <div className="shop-rating-summary">
                     <strong>{shopReviews.filter((review) => review.shop_id === shop.id).length ? "★ " + (shopReviews.filter((review) => review.shop_id === shop.id).reduce((sum, review) => sum + Number(review.rating), 0) / shopReviews.filter((review) => review.shop_id === shop.id).length).toFixed(1) : "No ratings yet"}</strong>
                     <span>({shopReviews.filter((review) => review.shop_id === shop.id).length} reviews)</span>
@@ -432,8 +455,14 @@ export default function Home() {
       <section className="content-section live-prices-section" id="live-prices">
         <div className="section-heading">
           <div><span className="eyebrow">COMPARE BEFORE YOU BUY</span><h2>Compare shop prices</h2></div>
-          <span className="location-pill">Live prices from local shops</span>
+          <span className="location-pill">{selectedShop ? `Prices for ${selectedShop.shop_name}` : "Live prices from local shops"}</span>
         </div>
+        {selectedShop && (
+          <div className="shop-selection-notice" role="status">
+            <span>Showing prices from <strong>{selectedShop.shop_name}</strong> · {selectedShop.area}</span>
+            <button type="button" onClick={() => setSelectedShopId("")}>Show all shops</button>
+          </div>
+        )}
         <div className="comparison-controls">
           <label className="search-box comparison-search">
             <span>⌕</span>
@@ -467,7 +496,7 @@ export default function Home() {
         {pricesLoading ? <p className="shops-status">Loading shop prices...</p> : livePrices.length === 0 ? (
           <p className="shops-status">No shop prices have been published yet. Approved shop owners can add prices from their owner portal.</p>
         ) : comparisonGroups.length === 0 ? (
-          <p className="shops-status">No matching prices found. Try another product or area.</p>
+          <p className="shops-status">{selectedShop ? `No prices have been published by ${selectedShop.shop_name} yet.` : "No matching prices found. Try another product or area."}</p>
         ) : (
           <div className="comparison-grid">
             {comparisonGroups.map((items) => {
