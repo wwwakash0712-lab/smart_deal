@@ -8,6 +8,7 @@ const links = [
   { href: "/shops", label: "Find shops" },
   { href: "/compare", label: "Compare prices" },
   { href: "/shopping-list", label: "My list" },
+  { href: "/account", label: "Account" },
 ];
 
 export default function CustomerNav() {
@@ -17,7 +18,7 @@ export default function CustomerNav() {
       <Link className="brand" href="/"><span className="brand-mark">S</span> Smart Deal</Link>
       <nav className="customer-nav">
         {links.map((link) => (
-          <Link key={link.href} href={link.href} className={pathname === link.href ? "active" : ""}>{link.label}</Link>
+          <Link key={link.href} href={link.href} className={pathname === link.href || (link.href === "/account" && pathname.startsWith("/account")) ? "active" : ""}>{link.label}</Link>
         ))}
       </nav>
       <Link className="outline-button" href="/shop-register">List your shop</Link>
