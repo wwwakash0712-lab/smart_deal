@@ -211,7 +211,7 @@ export default function AdminDashboardPage() {
               <article className="admin-shop-card" key={review.id}>
                 <div className="admin-shop-top"><div><span className="eyebrow">CUSTOMER REVIEW</span><h3>{review.customer_name} · {"★".repeat(Number(review.rating))}</h3></div><span className="admin-pending">pending</span></div>
                 <div className="admin-shop-details">
-                  <p><strong>Shop name:</strong> {review.shop?.shop_name || "Shop name unavailable"}</p>
+                  <p><strong>Shop name:</strong> {review.shop?.[0]?.shop_name || "Shop name unavailable"}</p>
                   <p><strong>Review:</strong> {review.review}</p>
                   <p><strong>Submitted:</strong> {new Date(review.created_at).toLocaleString("en-IN")}</p>
                 </div>
