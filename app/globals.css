@@ -466,3 +466,21 @@ footer{max-width:1100px;margin:auto;padding:25px 24px 35px;border-top:1px solid 
   .account-shell>.page-heading h1{font-size:34px}
   .account-card{padding:19px 15px}
 }
+
+
+/* Refined premium shopping basket */
+.list-section-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 14px;padding:18px 20px;border:1px solid #e4ebe3;border-radius:15px;background:linear-gradient(120deg,#f5faf4,#fff)}
+.list-section-heading h2{font:800 21px Manrope,sans-serif;letter-spacing:-.5px;margin:5px 0 0}
+.list-section-heading>a{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:9px;background:#176b4a;color:white;font-size:12px;font-weight:800;white-space:nowrap}
+.item-count{display:inline-grid;place-items:center;min-width:25px;height:25px;margin-left:5px;border-radius:8px;background:#e5f1e6;color:#176b4a;font:800 12px 'DM Sans',sans-serif}
+.basket-results{margin-top:30px;padding:25px;border-radius:18px;background:linear-gradient(145deg,#f5f8f2,#fbfcfa);border-color:#e2eae0}
+.basket-results h2{font:800 25px Manrope,sans-serif;letter-spacing:-.8px;margin:8px 0}
+.basket-shop{padding:17px 18px;border-radius:12px;transition:border-color .2s,transform .2s}
+.basket-shop.complete{border-color:#d4e5d5;background:#fff}
+.basket-shop.complete.cheapest-basket{border:1.5px solid #a9d2b2;background:linear-gradient(110deg,#edf7ed,#fff)}
+.basket-best-label{display:inline-block;margin-left:6px;padding:5px 8px;border-radius:20px;background:#176b4a;color:#fff;font:800 9px 'DM Sans',sans-serif;letter-spacing:.4px;vertical-align:middle}
+.basket-empty{margin-top:15px;padding:22px;border:1px dashed #cbd8ce;border-radius:12px;background:#fff}
+.basket-empty strong{font-size:14px}
+.basket-empty p{font-size:12px;color:var(--muted);line-height:1.6}
+.basket-empty a{color:var(--green);font-size:12px;font-weight:800}
+@media(max-width:520px){.list-section-heading{padding:14px;align-items:flex-start}.list-section-heading h2{font-size:18px}.list-section-heading>a{padding:9px 10px;font-size:11px}.basket-results{padding:16px}.basket-results h2{font-size:22px}.basket-best-label{margin:5px 0 0;display:table}}
