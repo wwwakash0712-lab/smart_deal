@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
 type PriceReport = { id: string; shop_id: string; shop_name: string; product_name: string; category: string; unit: string; displayed_price: number; report_reason: string; status: string; created_at: string; has_notification?: boolean; };
-type ShopReview = { id: string; shop_id: string; shop: { shop_name: string } | null; customer_name: string; rating: number; review: string; status: string; created_at: string; };
+type ShopReview = { id: string; shop_id: string; shop: { shop_name: string }[] | null; customer_name: string; rating: number; review: string; status: string; created_at: string; };
 
 type Shop = {
   id: string;
