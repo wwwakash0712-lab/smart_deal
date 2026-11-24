@@ -21,6 +21,7 @@ export default function ShopsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [area, setArea] = useState("All areas");
+  const [sort, setSort] = useState("name");
 
   useEffect(() => {
     let active = true;
@@ -71,6 +72,12 @@ export default function ShopsPage() {
         .toLowerCase()
         .includes(search.trim().toLowerCase());
     return matchesArea && matchesSearch;
+  }).sort((a, b) => {
+    const countA = prices.filter((price) => price.shop_id === a.id).length;
+    const countB = prices.filter((price) => price.shop_id === b.id).length;
+    if (sort === "prices") return countB - countA || a.shop_name.localeCompare(b.shop_name);
+    if (sort === "area") return a.area.localeCompare(b.area) || a.shop_name.localeCompare(b.shop_name);
+    return a.shop_name.localeCompare(b.shop_name);
   });
 
   return (
@@ -85,6 +92,7 @@ export default function ShopsPage() {
         <div className="page-filters">
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search shop, product or area..." aria-label="Search shops" />
           <select value={area} onChange={(event) => setArea(event.target.value)}>{areas.map((item) => <option key={item}>{item}</option>)}</select>
+          <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort shops"><option value="name">Shop name: A–Z</option><option value="prices">Most published prices</option><option value="area">Area: A–Z</option></select>
         </div>
         {loading ? (
           <p className="shops-status">Loading approved shops...</p>
