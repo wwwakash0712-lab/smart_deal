@@ -80,10 +80,21 @@ export default function ShoppingListPage() {
   }, [items, ready, userId]);
 
   useEffect(() => {
+    let active = true;
     (async () => {
-      const { data } = await supabase.from("public_shop_prices").select("shop_id,product_name,unit,price,shop_name,area");
-      setPrices((data ?? []) as Price[]);
+      const { data: approved } = await supabase.from("approved_shops").select("id,shop_name,area");
+      if (!approved?.length) { if (active) setPrices([]); return; }
+      const approvedIds = approved.map((shop) => shop.id);
+      const { data } = await supabase.from("public_shop_prices").select("shop_id,product_name,unit,price,shop_name,area").in("shop_id", approvedIds);
+      if (active) {
+        const approvedById = new Map(approved.map((shop) => [shop.id, shop]));
+        setPrices(((data ?? []) as Price[]).filter((price) => approvedById.has(price.shop_id)).map((price) => {
+          const shop = approvedById.get(price.shop_id)!;
+          return { ...price, shop_name: shop.shop_name, area: shop.area };
+        }));
+      }
     })();
+    return () => { active = false; };
   }, []);
 
   const entries = Object.entries(items);
